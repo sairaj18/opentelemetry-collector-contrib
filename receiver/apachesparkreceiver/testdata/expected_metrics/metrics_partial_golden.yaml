@@ -404,6 +404,66 @@ resourceMetrics:
                   startTimeUnixNano: "1000000"
                   timeUnixNano: "2000000"
             unit: '{ event }'
+          - description: The average rate at which data is arriving for a Structured Streaming query.
+            gauge:
+              dataPoints:
+                - asDouble: 1000
+                  attributes:
+                    - key: query.name
+                      value:
+                        stringValue: streamingquery
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: spark.streaming.input.rate
+            unit: '{ record }/s'
+          - description: The average processing latency of a Structured Streaming query's batches.
+            gauge:
+              dataPoints:
+                - asInt: "37"
+                  attributes:
+                    - key: query.name
+                      value:
+                        stringValue: streamingquery
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: spark.streaming.latency
+            unit: ms
+          - description: The average rate at which a Structured Streaming query is processing data.
+            gauge:
+              dataPoints:
+                - asDouble: 500
+                  attributes:
+                    - key: query.name
+                      value:
+                        stringValue: streamingquery
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: spark.streaming.processing.rate
+            unit: '{ record }/s'
+          - description: The amount of memory used by the state store of a Structured Streaming query.
+            gauge:
+              dataPoints:
+                - asInt: "2048"
+                  attributes:
+                    - key: query.name
+                      value:
+                        stringValue: streamingquery
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: spark.streaming.state.memory.usage
+            unit: bytes
+          - description: The total number of rows held in the state store of a Structured Streaming query.
+            gauge:
+              dataPoints:
+                - asInt: "42"
+                  attributes:
+                    - key: query.name
+                      value:
+                        stringValue: streamingquery
+                  startTimeUnixNano: "1000000"
+                  timeUnixNano: "2000000"
+            name: spark.streaming.state.rows
+            unit: '{ row }'
         scope:
           name: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachesparkreceiver
           version: latest

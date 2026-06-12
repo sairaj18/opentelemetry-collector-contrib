@@ -147,6 +147,21 @@ all_set:
       attributes: ["result"]
     spark.stage.task.result_size:
       enabled: true
+    spark.streaming.input.rate:
+      enabled: true
+      attributes: ["query.name"]
+    spark.streaming.latency:
+      enabled: true
+      attributes: ["query.name"]
+    spark.streaming.processing.rate:
+      enabled: true
+      attributes: ["query.name"]
+    spark.streaming.state.memory.usage:
+      enabled: true
+      attributes: ["query.name"]
+    spark.streaming.state.rows:
+      enabled: true
+      attributes: ["query.name"]
   resource_attributes:
     spark.application.id:
       enabled: true
@@ -308,6 +323,21 @@ reaggregate_set:
       attributes: []
     spark.stage.task.result_size:
       enabled: true
+    spark.streaming.input.rate:
+      enabled: true
+      attributes: []
+    spark.streaming.latency:
+      enabled: true
+      attributes: []
+    spark.streaming.processing.rate:
+      enabled: true
+      attributes: []
+    spark.streaming.state.memory.usage:
+      enabled: true
+      attributes: []
+    spark.streaming.state.rows:
+      enabled: true
+      attributes: []
   resource_attributes:
     spark.application.id:
       enabled: true
@@ -469,6 +499,21 @@ none_set:
       attributes: ["result"]
     spark.stage.task.result_size:
       enabled: false
+    spark.streaming.input.rate:
+      enabled: false
+      attributes: ["query.name"]
+    spark.streaming.latency:
+      enabled: false
+      attributes: ["query.name"]
+    spark.streaming.processing.rate:
+      enabled: false
+      attributes: ["query.name"]
+    spark.streaming.state.memory.usage:
+      enabled: false
+      attributes: ["query.name"]
+    spark.streaming.state.rows:
+      enabled: false
+      attributes: ["query.name"]
   resource_attributes:
     spark.application.id:
       enabled: false

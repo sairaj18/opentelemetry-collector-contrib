@@ -641,6 +641,76 @@ The amount of data transmitted back to the driver by all the tasks in this stage
 | ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
 | bytes | Sum | Int | Cumulative | true | Development |
 
+### spark.streaming.input.rate
+
+The average rate at which data is arriving for a Structured Streaming query.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| { record }/s | Gauge | Double | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| query.name | The name of the Structured Streaming query for which the metric was recorded. | Any Str | Recommended | - |
+
+### spark.streaming.latency
+
+The average processing latency of a Structured Streaming query's batches.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| ms | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| query.name | The name of the Structured Streaming query for which the metric was recorded. | Any Str | Recommended | - |
+
+### spark.streaming.processing.rate
+
+The average rate at which a Structured Streaming query is processing data.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| { record }/s | Gauge | Double | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| query.name | The name of the Structured Streaming query for which the metric was recorded. | Any Str | Recommended | - |
+
+### spark.streaming.state.memory.usage
+
+The amount of memory used by the state store of a Structured Streaming query.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| bytes | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| query.name | The name of the Structured Streaming query for which the metric was recorded. | Any Str | Recommended | - |
+
+### spark.streaming.state.rows
+
+The total number of rows held in the state store of a Structured Streaming query.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| { row } | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| query.name | The name of the Structured Streaming query for which the metric was recorded. | Any Str | Recommended | - |
+
 ## Resource Attributes
 
 | Name | Description | Values | Enabled | Semantic Convention |

@@ -478,6 +478,21 @@ var MetricsInfo = metricsInfo{
 	SparkStageTaskResultSize: metricInfo{
 		Name: "spark.stage.task.result_size",
 	},
+	SparkStreamingInputRate: metricInfo{
+		Name: "spark.streaming.input.rate",
+	},
+	SparkStreamingLatency: metricInfo{
+		Name: "spark.streaming.latency",
+	},
+	SparkStreamingProcessingRate: metricInfo{
+		Name: "spark.streaming.processing.rate",
+	},
+	SparkStreamingStateMemoryUsage: metricInfo{
+		Name: "spark.streaming.state.memory.usage",
+	},
+	SparkStreamingStateRows: metricInfo{
+		Name: "spark.streaming.state.rows",
+	},
 }
 
 type metricsInfo struct {
@@ -544,6 +559,11 @@ type metricsInfo struct {
 	SparkStageTaskActive                               metricInfo
 	SparkStageTaskResult                               metricInfo
 	SparkStageTaskResultSize                           metricInfo
+	SparkStreamingInputRate                            metricInfo
+	SparkStreamingLatency                              metricInfo
+	SparkStreamingProcessingRate                       metricInfo
+	SparkStreamingStateMemoryUsage                     metricInfo
+	SparkStreamingStateRows                            metricInfo
 }
 
 type metricInfo struct {
@@ -4611,6 +4631,451 @@ func newMetricSparkStageTaskResultSize(cfg SparkStageTaskResultSizeMetricConfig)
 	return m
 }
 
+type metricSparkStreamingInputRate struct {
+	data          pmetric.Metric                      // data buffer for generated metric.
+	config        SparkStreamingInputRateMetricConfig // metric config provided by user.
+	capacity      int                                 // max observed number of data points added to the metric.
+	aggDataPoints []float64                           // slice containing number of aggregated datapoints at each index
+}
+
+// init fills spark.streaming.input.rate metric with initial data.
+func (m *metricSparkStreamingInputRate) init() {
+	m.data.SetName("spark.streaming.input.rate")
+	m.data.SetDescription("The average rate at which data is arriving for a Structured Streaming query.")
+	m.data.SetUnit("{ record }/s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricSparkStreamingInputRate) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, queryNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, SparkStreamingInputRateMetricAttributeKeyQueryName) {
+		dp.Attributes().PutStr("query.name", queryNameAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetDoubleValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSparkStreamingInputRate) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSparkStreamingInputRate) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSparkStreamingInputRate(cfg SparkStreamingInputRateMetricConfig) metricSparkStreamingInputRate {
+	m := metricSparkStreamingInputRate{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSparkStreamingLatency struct {
+	data          pmetric.Metric                    // data buffer for generated metric.
+	config        SparkStreamingLatencyMetricConfig // metric config provided by user.
+	capacity      int                               // max observed number of data points added to the metric.
+	aggDataPoints []int64                           // slice containing number of aggregated datapoints at each index
+}
+
+// init fills spark.streaming.latency metric with initial data.
+func (m *metricSparkStreamingLatency) init() {
+	m.data.SetName("spark.streaming.latency")
+	m.data.SetDescription("The average processing latency of a Structured Streaming query's batches.")
+	m.data.SetUnit("ms")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricSparkStreamingLatency) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, queryNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, SparkStreamingLatencyMetricAttributeKeyQueryName) {
+		dp.Attributes().PutStr("query.name", queryNameAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSparkStreamingLatency) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSparkStreamingLatency) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSparkStreamingLatency(cfg SparkStreamingLatencyMetricConfig) metricSparkStreamingLatency {
+	m := metricSparkStreamingLatency{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSparkStreamingProcessingRate struct {
+	data          pmetric.Metric                           // data buffer for generated metric.
+	config        SparkStreamingProcessingRateMetricConfig // metric config provided by user.
+	capacity      int                                      // max observed number of data points added to the metric.
+	aggDataPoints []float64                                // slice containing number of aggregated datapoints at each index
+}
+
+// init fills spark.streaming.processing.rate metric with initial data.
+func (m *metricSparkStreamingProcessingRate) init() {
+	m.data.SetName("spark.streaming.processing.rate")
+	m.data.SetDescription("The average rate at which a Structured Streaming query is processing data.")
+	m.data.SetUnit("{ record }/s")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricSparkStreamingProcessingRate) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val float64, queryNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, SparkStreamingProcessingRateMetricAttributeKeyQueryName) {
+		dp.Attributes().PutStr("query.name", queryNameAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetDoubleValue(dpi.DoubleValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.DoubleValue() > val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.DoubleValue() < val {
+					dpi.SetDoubleValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetDoubleValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSparkStreamingProcessingRate) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSparkStreamingProcessingRate) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetDoubleValue(m.data.Gauge().DataPoints().At(i).DoubleValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSparkStreamingProcessingRate(cfg SparkStreamingProcessingRateMetricConfig) metricSparkStreamingProcessingRate {
+	m := metricSparkStreamingProcessingRate{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSparkStreamingStateMemoryUsage struct {
+	data          pmetric.Metric                             // data buffer for generated metric.
+	config        SparkStreamingStateMemoryUsageMetricConfig // metric config provided by user.
+	capacity      int                                        // max observed number of data points added to the metric.
+	aggDataPoints []int64                                    // slice containing number of aggregated datapoints at each index
+}
+
+// init fills spark.streaming.state.memory.usage metric with initial data.
+func (m *metricSparkStreamingStateMemoryUsage) init() {
+	m.data.SetName("spark.streaming.state.memory.usage")
+	m.data.SetDescription("The amount of memory used by the state store of a Structured Streaming query.")
+	m.data.SetUnit("bytes")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricSparkStreamingStateMemoryUsage) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, queryNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, SparkStreamingStateMemoryUsageMetricAttributeKeyQueryName) {
+		dp.Attributes().PutStr("query.name", queryNameAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSparkStreamingStateMemoryUsage) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSparkStreamingStateMemoryUsage) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSparkStreamingStateMemoryUsage(cfg SparkStreamingStateMemoryUsageMetricConfig) metricSparkStreamingStateMemoryUsage {
+	m := metricSparkStreamingStateMemoryUsage{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricSparkStreamingStateRows struct {
+	data          pmetric.Metric                      // data buffer for generated metric.
+	config        SparkStreamingStateRowsMetricConfig // metric config provided by user.
+	capacity      int                                 // max observed number of data points added to the metric.
+	aggDataPoints []int64                             // slice containing number of aggregated datapoints at each index
+}
+
+// init fills spark.streaming.state.rows metric with initial data.
+func (m *metricSparkStreamingStateRows) init() {
+	m.data.SetName("spark.streaming.state.rows")
+	m.data.SetDescription("The total number of rows held in the state store of a Structured Streaming query.")
+	m.data.SetUnit("{ row }")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricSparkStreamingStateRows) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, queryNameAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, SparkStreamingStateRowsMetricAttributeKeyQueryName) {
+		dp.Attributes().PutStr("query.name", queryNameAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricSparkStreamingStateRows) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricSparkStreamingStateRows) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricSparkStreamingStateRows(cfg SparkStreamingStateRowsMetricConfig) metricSparkStreamingStateRows {
+	m := metricSparkStreamingStateRows{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
@@ -4684,6 +5149,11 @@ type MetricsBuilder struct {
 	metricSparkStageTaskActive                               metricSparkStageTaskActive
 	metricSparkStageTaskResult                               metricSparkStageTaskResult
 	metricSparkStageTaskResultSize                           metricSparkStageTaskResultSize
+	metricSparkStreamingInputRate                            metricSparkStreamingInputRate
+	metricSparkStreamingLatency                              metricSparkStreamingLatency
+	metricSparkStreamingProcessingRate                       metricSparkStreamingProcessingRate
+	metricSparkStreamingStateMemoryUsage                     metricSparkStreamingStateMemoryUsage
+	metricSparkStreamingStateRows                            metricSparkStreamingStateRows
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -4772,6 +5242,11 @@ func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, opt
 		metricSparkStageTaskActive:                               newMetricSparkStageTaskActive(mbc.Metrics.SparkStageTaskActive),
 		metricSparkStageTaskResult:                               newMetricSparkStageTaskResult(mbc.Metrics.SparkStageTaskResult),
 		metricSparkStageTaskResultSize:                           newMetricSparkStageTaskResultSize(mbc.Metrics.SparkStageTaskResultSize),
+		metricSparkStreamingInputRate:                            newMetricSparkStreamingInputRate(mbc.Metrics.SparkStreamingInputRate),
+		metricSparkStreamingLatency:                              newMetricSparkStreamingLatency(mbc.Metrics.SparkStreamingLatency),
+		metricSparkStreamingProcessingRate:                       newMetricSparkStreamingProcessingRate(mbc.Metrics.SparkStreamingProcessingRate),
+		metricSparkStreamingStateMemoryUsage:                     newMetricSparkStreamingStateMemoryUsage(mbc.Metrics.SparkStreamingStateMemoryUsage),
+		metricSparkStreamingStateRows:                            newMetricSparkStreamingStateRows(mbc.Metrics.SparkStreamingStateRows),
 		resourceAttributeIncludeFilter:                           make(map[string]filter.Filter),
 		resourceAttributeExcludeFilter:                           make(map[string]filter.Filter),
 	}
@@ -4943,6 +5418,11 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricSparkStageTaskActive.emit(ils.Metrics())
 	mb.metricSparkStageTaskResult.emit(ils.Metrics())
 	mb.metricSparkStageTaskResultSize.emit(ils.Metrics())
+	mb.metricSparkStreamingInputRate.emit(ils.Metrics())
+	mb.metricSparkStreamingLatency.emit(ils.Metrics())
+	mb.metricSparkStreamingProcessingRate.emit(ils.Metrics())
+	mb.metricSparkStreamingStateMemoryUsage.emit(ils.Metrics())
+	mb.metricSparkStreamingStateRows.emit(ils.Metrics())
 
 	for _, op := range options {
 		op.apply(rm)
@@ -5287,6 +5767,31 @@ func (mb *MetricsBuilder) RecordSparkStageTaskResultDataPoint(ts pcommon.Timesta
 // RecordSparkStageTaskResultSizeDataPoint adds a data point to spark.stage.task.result_size metric.
 func (mb *MetricsBuilder) RecordSparkStageTaskResultSizeDataPoint(ts pcommon.Timestamp, val int64) {
 	mb.metricSparkStageTaskResultSize.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordSparkStreamingInputRateDataPoint adds a data point to spark.streaming.input.rate metric.
+func (mb *MetricsBuilder) RecordSparkStreamingInputRateDataPoint(ts pcommon.Timestamp, val float64, queryNameAttributeValue string) {
+	mb.metricSparkStreamingInputRate.recordDataPoint(mb.startTime, ts, val, queryNameAttributeValue)
+}
+
+// RecordSparkStreamingLatencyDataPoint adds a data point to spark.streaming.latency metric.
+func (mb *MetricsBuilder) RecordSparkStreamingLatencyDataPoint(ts pcommon.Timestamp, val int64, queryNameAttributeValue string) {
+	mb.metricSparkStreamingLatency.recordDataPoint(mb.startTime, ts, val, queryNameAttributeValue)
+}
+
+// RecordSparkStreamingProcessingRateDataPoint adds a data point to spark.streaming.processing.rate metric.
+func (mb *MetricsBuilder) RecordSparkStreamingProcessingRateDataPoint(ts pcommon.Timestamp, val float64, queryNameAttributeValue string) {
+	mb.metricSparkStreamingProcessingRate.recordDataPoint(mb.startTime, ts, val, queryNameAttributeValue)
+}
+
+// RecordSparkStreamingStateMemoryUsageDataPoint adds a data point to spark.streaming.state.memory.usage metric.
+func (mb *MetricsBuilder) RecordSparkStreamingStateMemoryUsageDataPoint(ts pcommon.Timestamp, val int64, queryNameAttributeValue string) {
+	mb.metricSparkStreamingStateMemoryUsage.recordDataPoint(mb.startTime, ts, val, queryNameAttributeValue)
+}
+
+// RecordSparkStreamingStateRowsDataPoint adds a data point to spark.streaming.state.rows metric.
+func (mb *MetricsBuilder) RecordSparkStreamingStateRowsDataPoint(ts pcommon.Timestamp, val int64, queryNameAttributeValue string) {
+	mb.metricSparkStreamingStateRows.recordDataPoint(mb.startTime, ts, val, queryNameAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

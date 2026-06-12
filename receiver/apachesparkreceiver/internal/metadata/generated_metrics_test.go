@@ -87,6 +87,11 @@ func TestMetricsBuilder(t *testing.T) {
 			aggMap["spark.stage.shuffle.io.records"] = mb.metricSparkStageShuffleIoRecords.config.AggregationStrategy
 			aggMap["spark.stage.status"] = mb.metricSparkStageStatus.config.AggregationStrategy
 			aggMap["spark.stage.task.result"] = mb.metricSparkStageTaskResult.config.AggregationStrategy
+			aggMap["spark.streaming.input.rate"] = mb.metricSparkStreamingInputRate.config.AggregationStrategy
+			aggMap["spark.streaming.latency"] = mb.metricSparkStreamingLatency.config.AggregationStrategy
+			aggMap["spark.streaming.processing.rate"] = mb.metricSparkStreamingProcessingRate.config.AggregationStrategy
+			aggMap["spark.streaming.state.memory.usage"] = mb.metricSparkStreamingStateMemoryUsage.config.AggregationStrategy
+			aggMap["spark.streaming.state.rows"] = mb.metricSparkStreamingStateRows.config.AggregationStrategy
 
 			expectedWarnings := 0
 			if tt.metricsSet != testDataSetReag {
@@ -408,6 +413,41 @@ func TestMetricsBuilder(t *testing.T) {
 			allMetricsCount++
 			mb.RecordSparkStageTaskResultSizeDataPoint(ts, 1)
 
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSparkStreamingInputRateDataPoint(ts, 1, "query_name-val")
+			if tt.name == "reaggregate_set" {
+				mb.RecordSparkStreamingInputRateDataPoint(ts, 3, "query_name-val-2")
+			}
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSparkStreamingLatencyDataPoint(ts, 1, "query_name-val")
+			if tt.name == "reaggregate_set" {
+				mb.RecordSparkStreamingLatencyDataPoint(ts, 3, "query_name-val-2")
+			}
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSparkStreamingProcessingRateDataPoint(ts, 1, "query_name-val")
+			if tt.name == "reaggregate_set" {
+				mb.RecordSparkStreamingProcessingRateDataPoint(ts, 3, "query_name-val-2")
+			}
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSparkStreamingStateMemoryUsageDataPoint(ts, 1, "query_name-val")
+			if tt.name == "reaggregate_set" {
+				mb.RecordSparkStreamingStateMemoryUsageDataPoint(ts, 3, "query_name-val-2")
+			}
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordSparkStreamingStateRowsDataPoint(ts, 1, "query_name-val")
+			if tt.name == "reaggregate_set" {
+				mb.RecordSparkStreamingStateRowsDataPoint(ts, 3, "query_name-val-2")
+			}
+
 			rb := mb.NewResourceBuilder()
 			rb.SetSparkApplicationID("spark.application.id-val")
 			rb.SetSparkApplicationName("spark.application.name-val")
@@ -438,6 +478,11 @@ func TestMetricsBuilder(t *testing.T) {
 				assert.Empty(t, mb.metricSparkStageShuffleIoRecords.aggDataPoints)
 				assert.Empty(t, mb.metricSparkStageStatus.aggDataPoints)
 				assert.Empty(t, mb.metricSparkStageTaskResult.aggDataPoints)
+				assert.Empty(t, mb.metricSparkStreamingInputRate.aggDataPoints)
+				assert.Empty(t, mb.metricSparkStreamingLatency.aggDataPoints)
+				assert.Empty(t, mb.metricSparkStreamingProcessingRate.aggDataPoints)
+				assert.Empty(t, mb.metricSparkStreamingStateMemoryUsage.aggDataPoints)
+				assert.Empty(t, mb.metricSparkStreamingStateRows.aggDataPoints)
 			}
 
 			if tt.expectEmpty {
@@ -1962,6 +2007,206 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "spark.streaming.input.rate":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["spark.streaming.input.rate"], "Found a duplicate in the metrics slice: spark.streaming.input.rate")
+						validatedMetrics["spark.streaming.input.rate"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The average rate at which data is arriving for a Structured Streaming query.", mi.Description())
+						assert.Equal(t, "{ record }/s", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+						assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+						queryNameAttrVal, ok := dp.Attributes().Get("query.name")
+						assert.True(t, ok)
+						assert.Equal(t, "query_name-val", queryNameAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["spark.streaming.input.rate"], "Found a duplicate in the metrics slice: spark.streaming.input.rate")
+						validatedMetrics["spark.streaming.input.rate"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The average rate at which data is arriving for a Structured Streaming query.", mi.Description())
+						assert.Equal(t, "{ record }/s", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+						switch aggMap["spark.streaming.input.rate"] {
+						case "sum":
+							assert.InDelta(t, float64(4), dp.DoubleValue(), 0.01)
+						case "avg":
+							assert.InDelta(t, float64(2), dp.DoubleValue(), 0.01)
+						case "min":
+							assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+						case "max":
+							assert.InDelta(t, float64(3), dp.DoubleValue(), 0.01)
+						}
+						_, ok := dp.Attributes().Get("query.name")
+						assert.False(t, ok)
+					}
+				case "spark.streaming.latency":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["spark.streaming.latency"], "Found a duplicate in the metrics slice: spark.streaming.latency")
+						validatedMetrics["spark.streaming.latency"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The average processing latency of a Structured Streaming query's batches.", mi.Description())
+						assert.Equal(t, "ms", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						queryNameAttrVal, ok := dp.Attributes().Get("query.name")
+						assert.True(t, ok)
+						assert.Equal(t, "query_name-val", queryNameAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["spark.streaming.latency"], "Found a duplicate in the metrics slice: spark.streaming.latency")
+						validatedMetrics["spark.streaming.latency"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The average processing latency of a Structured Streaming query's batches.", mi.Description())
+						assert.Equal(t, "ms", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["spark.streaming.latency"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("query.name")
+						assert.False(t, ok)
+					}
+				case "spark.streaming.processing.rate":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["spark.streaming.processing.rate"], "Found a duplicate in the metrics slice: spark.streaming.processing.rate")
+						validatedMetrics["spark.streaming.processing.rate"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The average rate at which a Structured Streaming query is processing data.", mi.Description())
+						assert.Equal(t, "{ record }/s", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+						assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+						queryNameAttrVal, ok := dp.Attributes().Get("query.name")
+						assert.True(t, ok)
+						assert.Equal(t, "query_name-val", queryNameAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["spark.streaming.processing.rate"], "Found a duplicate in the metrics slice: spark.streaming.processing.rate")
+						validatedMetrics["spark.streaming.processing.rate"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The average rate at which a Structured Streaming query is processing data.", mi.Description())
+						assert.Equal(t, "{ record }/s", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+						switch aggMap["spark.streaming.processing.rate"] {
+						case "sum":
+							assert.InDelta(t, float64(4), dp.DoubleValue(), 0.01)
+						case "avg":
+							assert.InDelta(t, float64(2), dp.DoubleValue(), 0.01)
+						case "min":
+							assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
+						case "max":
+							assert.InDelta(t, float64(3), dp.DoubleValue(), 0.01)
+						}
+						_, ok := dp.Attributes().Get("query.name")
+						assert.False(t, ok)
+					}
+				case "spark.streaming.state.memory.usage":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["spark.streaming.state.memory.usage"], "Found a duplicate in the metrics slice: spark.streaming.state.memory.usage")
+						validatedMetrics["spark.streaming.state.memory.usage"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The amount of memory used by the state store of a Structured Streaming query.", mi.Description())
+						assert.Equal(t, "bytes", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						queryNameAttrVal, ok := dp.Attributes().Get("query.name")
+						assert.True(t, ok)
+						assert.Equal(t, "query_name-val", queryNameAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["spark.streaming.state.memory.usage"], "Found a duplicate in the metrics slice: spark.streaming.state.memory.usage")
+						validatedMetrics["spark.streaming.state.memory.usage"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The amount of memory used by the state store of a Structured Streaming query.", mi.Description())
+						assert.Equal(t, "bytes", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["spark.streaming.state.memory.usage"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("query.name")
+						assert.False(t, ok)
+					}
+				case "spark.streaming.state.rows":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["spark.streaming.state.rows"], "Found a duplicate in the metrics slice: spark.streaming.state.rows")
+						validatedMetrics["spark.streaming.state.rows"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The total number of rows held in the state store of a Structured Streaming query.", mi.Description())
+						assert.Equal(t, "{ row }", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						queryNameAttrVal, ok := dp.Attributes().Get("query.name")
+						assert.True(t, ok)
+						assert.Equal(t, "query_name-val", queryNameAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["spark.streaming.state.rows"], "Found a duplicate in the metrics slice: spark.streaming.state.rows")
+						validatedMetrics["spark.streaming.state.rows"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The total number of rows held in the state store of a Structured Streaming query.", mi.Description())
+						assert.Equal(t, "{ row }", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["spark.streaming.state.rows"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("query.name")
+						assert.False(t, ok)
+					}
 				}
 			}
 		})

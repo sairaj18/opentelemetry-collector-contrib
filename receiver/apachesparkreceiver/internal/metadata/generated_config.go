@@ -1834,6 +1834,246 @@ func (ms *SparkStageTaskResultSizeMetricConfig) Unmarshal(parser *confmap.Conf) 
 	return nil
 }
 
+// SparkStreamingInputRateMetricAttributeKey specifies the key of an attribute for the spark.streaming.input.rate metric.
+type SparkStreamingInputRateMetricAttributeKey string
+
+const (
+	SparkStreamingInputRateMetricAttributeKeyQueryName SparkStreamingInputRateMetricAttributeKey = "query.name"
+)
+
+// SparkStreamingInputRateMetricConfig provides config for the spark.streaming.input.rate metric.
+type SparkStreamingInputRateMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                      `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []SparkStreamingInputRateMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *SparkStreamingInputRateMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *SparkStreamingInputRateMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case SparkStreamingInputRateMetricAttributeKeyQueryName:
+		default:
+			return fmt.Errorf("metric spark.streaming.input.rate doesn't have an attribute %v, valid attributes: [query.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// SparkStreamingLatencyMetricAttributeKey specifies the key of an attribute for the spark.streaming.latency metric.
+type SparkStreamingLatencyMetricAttributeKey string
+
+const (
+	SparkStreamingLatencyMetricAttributeKeyQueryName SparkStreamingLatencyMetricAttributeKey = "query.name"
+)
+
+// SparkStreamingLatencyMetricConfig provides config for the spark.streaming.latency metric.
+type SparkStreamingLatencyMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                    `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []SparkStreamingLatencyMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *SparkStreamingLatencyMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *SparkStreamingLatencyMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case SparkStreamingLatencyMetricAttributeKeyQueryName:
+		default:
+			return fmt.Errorf("metric spark.streaming.latency doesn't have an attribute %v, valid attributes: [query.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// SparkStreamingProcessingRateMetricAttributeKey specifies the key of an attribute for the spark.streaming.processing.rate metric.
+type SparkStreamingProcessingRateMetricAttributeKey string
+
+const (
+	SparkStreamingProcessingRateMetricAttributeKeyQueryName SparkStreamingProcessingRateMetricAttributeKey = "query.name"
+)
+
+// SparkStreamingProcessingRateMetricConfig provides config for the spark.streaming.processing.rate metric.
+type SparkStreamingProcessingRateMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                           `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []SparkStreamingProcessingRateMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *SparkStreamingProcessingRateMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *SparkStreamingProcessingRateMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case SparkStreamingProcessingRateMetricAttributeKeyQueryName:
+		default:
+			return fmt.Errorf("metric spark.streaming.processing.rate doesn't have an attribute %v, valid attributes: [query.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// SparkStreamingStateMemoryUsageMetricAttributeKey specifies the key of an attribute for the spark.streaming.state.memory.usage metric.
+type SparkStreamingStateMemoryUsageMetricAttributeKey string
+
+const (
+	SparkStreamingStateMemoryUsageMetricAttributeKeyQueryName SparkStreamingStateMemoryUsageMetricAttributeKey = "query.name"
+)
+
+// SparkStreamingStateMemoryUsageMetricConfig provides config for the spark.streaming.state.memory.usage metric.
+type SparkStreamingStateMemoryUsageMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                             `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []SparkStreamingStateMemoryUsageMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *SparkStreamingStateMemoryUsageMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *SparkStreamingStateMemoryUsageMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case SparkStreamingStateMemoryUsageMetricAttributeKeyQueryName:
+		default:
+			return fmt.Errorf("metric spark.streaming.state.memory.usage doesn't have an attribute %v, valid attributes: [query.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// SparkStreamingStateRowsMetricAttributeKey specifies the key of an attribute for the spark.streaming.state.rows metric.
+type SparkStreamingStateRowsMetricAttributeKey string
+
+const (
+	SparkStreamingStateRowsMetricAttributeKeyQueryName SparkStreamingStateRowsMetricAttributeKey = "query.name"
+)
+
+// SparkStreamingStateRowsMetricConfig provides config for the spark.streaming.state.rows metric.
+type SparkStreamingStateRowsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                      `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []SparkStreamingStateRowsMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *SparkStreamingStateRowsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *SparkStreamingStateRowsMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case SparkStreamingStateRowsMetricAttributeKeyQueryName:
+		default:
+			return fmt.Errorf("metric spark.streaming.state.rows doesn't have an attribute %v, valid attributes: [query.name]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
 // MetricsConfig provides config for apache_spark metrics.
 type MetricsConfig struct {
 	SparkDriverBlockManagerDiskUsage                   SparkDriverBlockManagerDiskUsageMetricConfig                   `mapstructure:"spark.driver.block_manager.disk.usage"`
@@ -1899,6 +2139,11 @@ type MetricsConfig struct {
 	SparkStageTaskActive                               SparkStageTaskActiveMetricConfig                               `mapstructure:"spark.stage.task.active"`
 	SparkStageTaskResult                               SparkStageTaskResultMetricConfig                               `mapstructure:"spark.stage.task.result"`
 	SparkStageTaskResultSize                           SparkStageTaskResultSizeMetricConfig                           `mapstructure:"spark.stage.task.result_size"`
+	SparkStreamingInputRate                            SparkStreamingInputRateMetricConfig                            `mapstructure:"spark.streaming.input.rate"`
+	SparkStreamingLatency                              SparkStreamingLatencyMetricConfig                              `mapstructure:"spark.streaming.latency"`
+	SparkStreamingProcessingRate                       SparkStreamingProcessingRateMetricConfig                       `mapstructure:"spark.streaming.processing.rate"`
+	SparkStreamingStateMemoryUsage                     SparkStreamingStateMemoryUsageMetricConfig                     `mapstructure:"spark.streaming.state.memory.usage"`
+	SparkStreamingStateRows                            SparkStreamingStateRowsMetricConfig                            `mapstructure:"spark.streaming.state.rows"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -2131,6 +2376,31 @@ func DefaultMetricsConfig() MetricsConfig {
 		},
 		SparkStageTaskResultSize: SparkStageTaskResultSizeMetricConfig{
 			Enabled: true,
+		},
+		SparkStreamingInputRate: SparkStreamingInputRateMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []SparkStreamingInputRateMetricAttributeKey{SparkStreamingInputRateMetricAttributeKeyQueryName},
+		},
+		SparkStreamingLatency: SparkStreamingLatencyMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []SparkStreamingLatencyMetricAttributeKey{SparkStreamingLatencyMetricAttributeKeyQueryName},
+		},
+		SparkStreamingProcessingRate: SparkStreamingProcessingRateMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []SparkStreamingProcessingRateMetricAttributeKey{SparkStreamingProcessingRateMetricAttributeKeyQueryName},
+		},
+		SparkStreamingStateMemoryUsage: SparkStreamingStateMemoryUsageMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []SparkStreamingStateMemoryUsageMetricAttributeKey{SparkStreamingStateMemoryUsageMetricAttributeKeyQueryName},
+		},
+		SparkStreamingStateRows: SparkStreamingStateRowsMetricConfig{
+			Enabled:             true,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []SparkStreamingStateRowsMetricAttributeKey{SparkStreamingStateRowsMetricAttributeKeyQueryName},
 		},
 	}
 }

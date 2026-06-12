@@ -90,6 +90,10 @@ attributes:
     enum:
       - direct
       - mapped
+  query_name:
+    name_override: query.name
+    description: The name of the Structured Streaming query for which the metric was recorded.
+    type: string
   scheduler_status:
     name_override: status
     description: The status of the DAGScheduler stages for which the metric was recorded.
@@ -767,6 +771,46 @@ metrics:
       value_type: int
     unit: bytes
     attributes: []
+  spark.streaming.input.rate:
+    description: The average rate at which data is arriving for a Structured Streaming query.
+    enabled: true
+    stability: development
+    gauge:
+      value_type: double
+    unit: "{ record }/s"
+    attributes: [query_name]
+  spark.streaming.latency:
+    description: The average processing latency of a Structured Streaming query's batches.
+    enabled: true
+    stability: development
+    gauge:
+      value_type: int
+    unit: ms
+    attributes: [query_name]
+  spark.streaming.processing.rate:
+    description: The average rate at which a Structured Streaming query is processing data.
+    enabled: true
+    stability: development
+    gauge:
+      value_type: double
+    unit: "{ record }/s"
+    attributes: [query_name]
+  spark.streaming.state.memory.usage:
+    description: The amount of memory used by the state store of a Structured Streaming query.
+    enabled: true
+    stability: development
+    gauge:
+      value_type: int
+    unit: bytes
+    attributes: [query_name]
+  spark.streaming.state.rows:
+    description: The total number of rows held in the state store of a Structured Streaming query.
+    enabled: true
+    stability: development
+    gauge:
+      value_type: int
+    unit: "{ row }"
+    attributes: [query_name]
 
 tests:
   config:

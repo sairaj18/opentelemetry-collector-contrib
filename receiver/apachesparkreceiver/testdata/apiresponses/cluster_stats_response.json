@@ -1,6 +1,21 @@
 {
   "version": "4.0.0",
   "gauges": {
+    "local-1682603253681.driver.spark.streaming.streamingquery.inputRate-total": {
+      "value": 1000.0
+    },
+    "local-1682603253681.driver.spark.streaming.streamingquery.processingRate-total": {
+      "value": 500.0
+    },
+    "local-1682603253681.driver.spark.streaming.streamingquery.latency": {
+      "value": 37
+    },
+    "local-1682603253681.driver.spark.streaming.streamingquery.states-rowsTotal": {
+      "value": 42
+    },
+    "local-1682603253681.driver.spark.streaming.streamingquery.states-usedBytes": {
+      "value": 2048
+    },
     "local-1682603253681.driver.BlockManager.disk.diskSpaceUsed_MB": {
       "value": 0
     },
