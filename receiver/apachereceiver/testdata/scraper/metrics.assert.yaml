@@ -8,6 +8,9 @@ resources:
         - name: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/apachereceiver
           version: latest
           metrics:
+            - name: apache.bytes_per_sec
+              type: gauge
+              unit: By/s
             - name: apache.connections.async
               type: gauge
               unit: '{connections}'
@@ -63,6 +66,9 @@ resources:
               unit: '{requests}'
               temporality: cumulative
               monotonic: true
+            - name: apache.requests_per_sec
+              type: gauge
+              unit: '{requests}/s'
             - name: apache.scoreboard
               type: sum
               unit: '{workers}'
@@ -111,3 +117,6 @@ resources:
                     state: busy
                 - attributes:
                     state: idle
+            - name: apache.workers.max
+              type: gauge
+              unit: '{workers}'

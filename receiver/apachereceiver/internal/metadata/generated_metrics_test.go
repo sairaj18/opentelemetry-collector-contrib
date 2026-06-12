@@ -82,6 +82,10 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordApacheBytesPerSecDataPoint(ts, "1")
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordApacheConnectionsAsyncDataPoint(ts, "1", AttributeConnectionStateWriting)
 			if tt.name == "reaggregate_set" {
 				mb.RecordApacheConnectionsAsyncDataPoint(ts, "3", AttributeConnectionStateKeepalive)
@@ -124,6 +128,10 @@ func TestMetricsBuilder(t *testing.T) {
 
 			defaultMetricsCount++
 			allMetricsCount++
+			mb.RecordApacheRequestsPerSecDataPoint(ts, "1")
+
+			defaultMetricsCount++
+			allMetricsCount++
 			mb.RecordApacheScoreboardDataPoint(ts, 1, AttributeScoreboardStateOpen)
 			if tt.name == "reaggregate_set" {
 				mb.RecordApacheScoreboardDataPoint(ts, 3, AttributeScoreboardStateWaiting)
@@ -143,6 +151,10 @@ func TestMetricsBuilder(t *testing.T) {
 			if tt.name == "reaggregate_set" {
 				mb.RecordApacheWorkersDataPoint(ts, "3", AttributeWorkersStateIdle)
 			}
+
+			defaultMetricsCount++
+			allMetricsCount++
+			mb.RecordApacheWorkersMaxDataPoint(ts, 1)
 
 			rb := mb.NewResourceBuilder()
 			rb.SetApacheServerName("apache.server.name-val")
@@ -181,6 +193,18 @@ func TestMetricsBuilder(t *testing.T) {
 			validatedMetrics := make(map[string]bool)
 			for _, mi := range allMetricsList {
 				switch mi.Name() {
+				case "apache.bytes_per_sec":
+					assert.False(t, validatedMetrics["apache.bytes_per_sec"], "Found a duplicate in the metrics slice: apache.bytes_per_sec")
+					validatedMetrics["apache.bytes_per_sec"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Average number of bytes served per second since the server was started, as reported by mod_status.", mi.Description())
+					assert.Equal(t, "By/s", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
 				case "apache.connections.async":
 					if tt.name != "reaggregate_set" {
 						assert.False(t, validatedMetrics["apache.connections.async"], "Found a duplicate in the metrics slice: apache.connections.async")
@@ -360,6 +384,18 @@ func TestMetricsBuilder(t *testing.T) {
 					assert.Equal(t, ts, dp.Timestamp())
 					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
 					assert.Equal(t, int64(1), dp.IntValue())
+				case "apache.requests_per_sec":
+					assert.False(t, validatedMetrics["apache.requests_per_sec"], "Found a duplicate in the metrics slice: apache.requests_per_sec")
+					validatedMetrics["apache.requests_per_sec"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Average number of requests served per second since the server was started, as reported by mod_status.", mi.Description())
+					assert.Equal(t, "{requests}/s", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeDouble, dp.ValueType())
+					assert.InDelta(t, float64(1), dp.DoubleValue(), 0.01)
 				case "apache.scoreboard":
 					if tt.name != "reaggregate_set" {
 						assert.False(t, validatedMetrics["apache.scoreboard"], "Found a duplicate in the metrics slice: apache.scoreboard")
@@ -476,6 +512,18 @@ func TestMetricsBuilder(t *testing.T) {
 						_, ok := dp.Attributes().Get("state")
 						assert.False(t, ok)
 					}
+				case "apache.workers.max":
+					assert.False(t, validatedMetrics["apache.workers.max"], "Found a duplicate in the metrics slice: apache.workers.max")
+					validatedMetrics["apache.workers.max"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "The maximum number of worker slots configured for the HTTP server, derived from the scoreboard length.", mi.Description())
+					assert.Equal(t, "{workers}", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
 				}
 			}
 		})

@@ -9,6 +9,26 @@ import (
 	"go.opentelemetry.io/collector/filter"
 )
 
+// ApacheBytesPerSecMetricConfig provides config for the apache.bytes_per_sec metric.
+type ApacheBytesPerSecMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *ApacheBytesPerSecMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
 // ApacheConnectionsAsyncMetricAttributeKey specifies the key of an attribute for the apache.connections.async metric.
 type ApacheConnectionsAsyncMetricAttributeKey string
 
@@ -246,6 +266,26 @@ func (ms *ApacheRequestsMetricConfig) Unmarshal(parser *confmap.Conf) error {
 	return nil
 }
 
+// ApacheRequestsPerSecMetricConfig provides config for the apache.requests_per_sec metric.
+type ApacheRequestsPerSecMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *ApacheRequestsPerSecMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
 // ApacheScoreboardMetricAttributeKey specifies the key of an attribute for the apache.scoreboard metric.
 type ApacheScoreboardMetricAttributeKey string
 
@@ -382,8 +422,29 @@ func (ms *ApacheWorkersMetricConfig) Validate() error {
 	return nil
 }
 
+// ApacheWorkersMaxMetricConfig provides config for the apache.workers.max metric.
+type ApacheWorkersMaxMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *ApacheWorkersMaxMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
 // MetricsConfig provides config for apache metrics.
 type MetricsConfig struct {
+	ApacheBytesPerSec        ApacheBytesPerSecMetricConfig        `mapstructure:"apache.bytes_per_sec"`
 	ApacheConnectionsAsync   ApacheConnectionsAsyncMetricConfig   `mapstructure:"apache.connections.async"`
 	ApacheCPULoad            ApacheCPULoadMetricConfig            `mapstructure:"apache.cpu.load"`
 	ApacheCPUTime            ApacheCPUTimeMetricConfig            `mapstructure:"apache.cpu.time"`
@@ -393,14 +454,19 @@ type MetricsConfig struct {
 	ApacheLoad5              ApacheLoad5MetricConfig              `mapstructure:"apache.load.5"`
 	ApacheRequestTime        ApacheRequestTimeMetricConfig        `mapstructure:"apache.request.time"`
 	ApacheRequests           ApacheRequestsMetricConfig           `mapstructure:"apache.requests"`
+	ApacheRequestsPerSec     ApacheRequestsPerSecMetricConfig     `mapstructure:"apache.requests_per_sec"`
 	ApacheScoreboard         ApacheScoreboardMetricConfig         `mapstructure:"apache.scoreboard"`
 	ApacheTraffic            ApacheTrafficMetricConfig            `mapstructure:"apache.traffic"`
 	ApacheUptime             ApacheUptimeMetricConfig             `mapstructure:"apache.uptime"`
 	ApacheWorkers            ApacheWorkersMetricConfig            `mapstructure:"apache.workers"`
+	ApacheWorkersMax         ApacheWorkersMaxMetricConfig         `mapstructure:"apache.workers.max"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
 	return MetricsConfig{
+		ApacheBytesPerSec: ApacheBytesPerSecMetricConfig{
+			Enabled: true,
+		},
 		ApacheConnectionsAsync: ApacheConnectionsAsyncMetricConfig{
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategyAvg,
@@ -432,6 +498,9 @@ func DefaultMetricsConfig() MetricsConfig {
 		ApacheRequests: ApacheRequestsMetricConfig{
 			Enabled: true,
 		},
+		ApacheRequestsPerSec: ApacheRequestsPerSecMetricConfig{
+			Enabled: true,
+		},
 		ApacheScoreboard: ApacheScoreboardMetricConfig{
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategySum,
@@ -447,6 +516,9 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategySum,
 			EnabledAttributes:   []ApacheWorkersMetricAttributeKey{ApacheWorkersMetricAttributeKeyWorkersState},
+		},
+		ApacheWorkersMax: ApacheWorkersMaxMetricConfig{
+			Enabled: true,
 		},
 	}
 }

@@ -1,6 +1,8 @@
 default:
 all_set:
   metrics:
+    apache.bytes_per_sec:
+      enabled: true
     apache.connections.async:
       enabled: true
       attributes: ["connection_state"]
@@ -21,6 +23,8 @@ all_set:
       enabled: true
     apache.requests:
       enabled: true
+    apache.requests_per_sec:
+      enabled: true
     apache.scoreboard:
       enabled: true
       attributes: ["state"]
@@ -31,6 +35,8 @@ all_set:
     apache.workers:
       enabled: true
       attributes: ["state"]
+    apache.workers.max:
+      enabled: true
   resource_attributes:
     apache.server.name:
       enabled: true
@@ -38,6 +44,8 @@ all_set:
       enabled: true
 reaggregate_set:
   metrics:
+    apache.bytes_per_sec:
+      enabled: true
     apache.connections.async:
       enabled: true
       attributes: []
@@ -58,6 +66,8 @@ reaggregate_set:
       enabled: true
     apache.requests:
       enabled: true
+    apache.requests_per_sec:
+      enabled: true
     apache.scoreboard:
       enabled: true
       attributes: []
@@ -68,6 +78,8 @@ reaggregate_set:
     apache.workers:
       enabled: true
       attributes: []
+    apache.workers.max:
+      enabled: true
   resource_attributes:
     apache.server.name:
       enabled: true
@@ -75,6 +87,8 @@ reaggregate_set:
       enabled: true
 none_set:
   metrics:
+    apache.bytes_per_sec:
+      enabled: false
     apache.connections.async:
       enabled: false
       attributes: ["connection_state"]
@@ -95,6 +109,8 @@ none_set:
       enabled: false
     apache.requests:
       enabled: false
+    apache.requests_per_sec:
+      enabled: false
     apache.scoreboard:
       enabled: false
       attributes: ["state"]
@@ -105,6 +121,8 @@ none_set:
     apache.workers:
       enabled: false
       attributes: ["state"]
+    apache.workers.max:
+      enabled: false
   resource_attributes:
     apache.server.name:
       enabled: false

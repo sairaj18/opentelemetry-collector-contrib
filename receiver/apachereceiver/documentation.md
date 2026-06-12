@@ -12,6 +12,14 @@ metrics:
     enabled: false
 ```
 
+### apache.bytes_per_sec
+
+Average number of bytes served per second since the server was started, as reported by mod_status.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| By/s | Gauge | Double | Development |
+
 ### apache.connections.async
 
 The number of connections in different asynchronous states reported by Apache's server-status.
@@ -97,6 +105,14 @@ The number of requests serviced by the HTTP server per second.
 | ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
 | {requests} | Sum | Int | Cumulative | true | Development |
 
+### apache.requests_per_sec
+
+Average number of requests served per second since the server was started, as reported by mod_status.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {requests}/s | Gauge | Double | Development |
+
 ### apache.scoreboard
 
 The number of workers in each state.
@@ -142,6 +158,14 @@ The number of workers currently attached to the HTTP server.
 | Name | Description | Values | Requirement Level | Semantic Convention |
 | ---- | ----------- | ------ | ----------------- | ------------------- |
 | state | The state of workers. | Str: ``busy``, ``idle`` | Recommended | - |
+
+### apache.workers.max
+
+The maximum number of worker slots configured for the HTTP server, derived from the scoreboard length.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {workers} | Gauge | Int | Development |
 
 ## Resource Attributes
 
