@@ -109,6 +109,82 @@ var MapAttributeOperation = map[string]AttributeOperation{
 	"get":       AttributeOperationGet,
 }
 
+// AttributeSlabChunkState specifies the value slab_chunk_state attribute.
+type AttributeSlabChunkState int
+
+const (
+	_ AttributeSlabChunkState = iota
+	AttributeSlabChunkStateUsed
+	AttributeSlabChunkStateFree
+	AttributeSlabChunkStateTotal
+)
+
+// String returns the string representation of the AttributeSlabChunkState.
+func (av AttributeSlabChunkState) String() string {
+	switch av {
+	case AttributeSlabChunkStateUsed:
+		return "used"
+	case AttributeSlabChunkStateFree:
+		return "free"
+	case AttributeSlabChunkStateTotal:
+		return "total"
+	}
+	return ""
+}
+
+// MapAttributeSlabChunkState is a helper map of string to AttributeSlabChunkState attribute value.
+var MapAttributeSlabChunkState = map[string]AttributeSlabChunkState{
+	"used":  AttributeSlabChunkStateUsed,
+	"free":  AttributeSlabChunkStateFree,
+	"total": AttributeSlabChunkStateTotal,
+}
+
+// AttributeSlabOperation specifies the value slab_operation attribute.
+type AttributeSlabOperation int
+
+const (
+	_ AttributeSlabOperation = iota
+	AttributeSlabOperationSet
+	AttributeSlabOperationGet
+	AttributeSlabOperationDelete
+	AttributeSlabOperationIncrement
+	AttributeSlabOperationDecrement
+	AttributeSlabOperationTouch
+	AttributeSlabOperationCas
+)
+
+// String returns the string representation of the AttributeSlabOperation.
+func (av AttributeSlabOperation) String() string {
+	switch av {
+	case AttributeSlabOperationSet:
+		return "set"
+	case AttributeSlabOperationGet:
+		return "get"
+	case AttributeSlabOperationDelete:
+		return "delete"
+	case AttributeSlabOperationIncrement:
+		return "increment"
+	case AttributeSlabOperationDecrement:
+		return "decrement"
+	case AttributeSlabOperationTouch:
+		return "touch"
+	case AttributeSlabOperationCas:
+		return "cas"
+	}
+	return ""
+}
+
+// MapAttributeSlabOperation is a helper map of string to AttributeSlabOperation attribute value.
+var MapAttributeSlabOperation = map[string]AttributeSlabOperation{
+	"set":       AttributeSlabOperationSet,
+	"get":       AttributeSlabOperationGet,
+	"delete":    AttributeSlabOperationDelete,
+	"increment": AttributeSlabOperationIncrement,
+	"decrement": AttributeSlabOperationDecrement,
+	"touch":     AttributeSlabOperationTouch,
+	"cas":       AttributeSlabOperationCas,
+}
+
 // AttributeState specifies the value state attribute.
 type AttributeState int
 
@@ -192,23 +268,55 @@ var MetricsInfo = metricsInfo{
 	MemcachedOperations: metricInfo{
 		Name: "memcached.operations",
 	},
+	MemcachedSlabsAllocatedMemory: metricInfo{
+		Name: "memcached.slabs.allocated_memory",
+	},
+	MemcachedSlabsChunkSize: metricInfo{
+		Name: "memcached.slabs.chunk_size",
+	},
+	MemcachedSlabsChunks: metricInfo{
+		Name: "memcached.slabs.chunks",
+	},
+	MemcachedSlabsChunksPerPage: metricInfo{
+		Name: "memcached.slabs.chunks_per_page",
+	},
+	MemcachedSlabsCount: metricInfo{
+		Name: "memcached.slabs.count",
+	},
+	MemcachedSlabsOperations: metricInfo{
+		Name: "memcached.slabs.operations",
+	},
+	MemcachedSlabsPages: metricInfo{
+		Name: "memcached.slabs.pages",
+	},
+	MemcachedSlabsRequestedMemory: metricInfo{
+		Name: "memcached.slabs.requested_memory",
+	},
 	MemcachedThreads: metricInfo{
 		Name: "memcached.threads",
 	},
 }
 
 type metricsInfo struct {
-	MemcachedBytes              metricInfo
-	MemcachedCommands           metricInfo
-	MemcachedConnectionsCurrent metricInfo
-	MemcachedConnectionsTotal   metricInfo
-	MemcachedCPUUsage           metricInfo
-	MemcachedCurrentItems       metricInfo
-	MemcachedEvictions          metricInfo
-	MemcachedNetwork            metricInfo
-	MemcachedOperationHitRatio  metricInfo
-	MemcachedOperations         metricInfo
-	MemcachedThreads            metricInfo
+	MemcachedBytes                metricInfo
+	MemcachedCommands             metricInfo
+	MemcachedConnectionsCurrent   metricInfo
+	MemcachedConnectionsTotal     metricInfo
+	MemcachedCPUUsage             metricInfo
+	MemcachedCurrentItems         metricInfo
+	MemcachedEvictions            metricInfo
+	MemcachedNetwork              metricInfo
+	MemcachedOperationHitRatio    metricInfo
+	MemcachedOperations           metricInfo
+	MemcachedSlabsAllocatedMemory metricInfo
+	MemcachedSlabsChunkSize       metricInfo
+	MemcachedSlabsChunks          metricInfo
+	MemcachedSlabsChunksPerPage   metricInfo
+	MemcachedSlabsCount           metricInfo
+	MemcachedSlabsOperations      metricInfo
+	MemcachedSlabsPages           metricInfo
+	MemcachedSlabsRequestedMemory metricInfo
+	MemcachedThreads              metricInfo
 }
 
 type metricInfo struct {
@@ -929,6 +1037,648 @@ func newMetricMemcachedOperations(cfg MemcachedOperationsMetricConfig) metricMem
 	return m
 }
 
+type metricMemcachedSlabsAllocatedMemory struct {
+	data     pmetric.Metric                            // data buffer for generated metric.
+	config   MemcachedSlabsAllocatedMemoryMetricConfig // metric config provided by user.
+	capacity int                                       // max observed number of data points added to the metric.
+}
+
+// init fills memcached.slabs.allocated_memory metric with initial data.
+func (m *metricMemcachedSlabsAllocatedMemory) init() {
+	m.data.SetName("memcached.slabs.allocated_memory")
+	m.data.SetDescription("Total memory allocated to slab pages.")
+	m.data.SetUnit("By")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricMemcachedSlabsAllocatedMemory) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsAllocatedMemory) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsAllocatedMemory) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsAllocatedMemory(cfg MemcachedSlabsAllocatedMemoryMetricConfig) metricMemcachedSlabsAllocatedMemory {
+	m := metricMemcachedSlabsAllocatedMemory{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsChunkSize struct {
+	data          pmetric.Metric                      // data buffer for generated metric.
+	config        MemcachedSlabsChunkSizeMetricConfig // metric config provided by user.
+	capacity      int                                 // max observed number of data points added to the metric.
+	aggDataPoints []int64                             // slice containing number of aggregated datapoints at each index
+}
+
+// init fills memcached.slabs.chunk_size metric with initial data.
+func (m *metricMemcachedSlabsChunkSize) init() {
+	m.data.SetName("memcached.slabs.chunk_size")
+	m.data.SetDescription("The amount of space each chunk uses in a slab class.")
+	m.data.SetUnit("By")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricMemcachedSlabsChunkSize) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsChunkSizeMetricAttributeKeySlab) {
+		dp.Attributes().PutInt("slab", slabAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsChunkSize) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsChunkSize) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsChunkSize(cfg MemcachedSlabsChunkSizeMetricConfig) metricMemcachedSlabsChunkSize {
+	m := metricMemcachedSlabsChunkSize{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsChunks struct {
+	data          pmetric.Metric                   // data buffer for generated metric.
+	config        MemcachedSlabsChunksMetricConfig // metric config provided by user.
+	capacity      int                              // max observed number of data points added to the metric.
+	aggDataPoints []int64                          // slice containing number of aggregated datapoints at each index
+}
+
+// init fills memcached.slabs.chunks metric with initial data.
+func (m *metricMemcachedSlabsChunks) init() {
+	m.data.SetName("memcached.slabs.chunks")
+	m.data.SetDescription("Number of chunks in a slab class, by allocation state.")
+	m.data.SetUnit("{chunk}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricMemcachedSlabsChunks) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, slabAttributeValue int64, slabChunkStateAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsChunksMetricAttributeKeySlab) {
+		dp.Attributes().PutInt("slab", slabAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsChunksMetricAttributeKeySlabChunkState) {
+		dp.Attributes().PutStr("slab_chunk_state", slabChunkStateAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsChunks) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsChunks) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsChunks(cfg MemcachedSlabsChunksMetricConfig) metricMemcachedSlabsChunks {
+	m := metricMemcachedSlabsChunks{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsChunksPerPage struct {
+	data          pmetric.Metric                          // data buffer for generated metric.
+	config        MemcachedSlabsChunksPerPageMetricConfig // metric config provided by user.
+	capacity      int                                     // max observed number of data points added to the metric.
+	aggDataPoints []int64                                 // slice containing number of aggregated datapoints at each index
+}
+
+// init fills memcached.slabs.chunks_per_page metric with initial data.
+func (m *metricMemcachedSlabsChunksPerPage) init() {
+	m.data.SetName("memcached.slabs.chunks_per_page")
+	m.data.SetDescription("Number of chunks within a single page in a slab class.")
+	m.data.SetUnit("{chunk}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricMemcachedSlabsChunksPerPage) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsChunksPerPageMetricAttributeKeySlab) {
+		dp.Attributes().PutInt("slab", slabAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsChunksPerPage) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsChunksPerPage) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsChunksPerPage(cfg MemcachedSlabsChunksPerPageMetricConfig) metricMemcachedSlabsChunksPerPage {
+	m := metricMemcachedSlabsChunksPerPage{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsCount struct {
+	data     pmetric.Metric                  // data buffer for generated metric.
+	config   MemcachedSlabsCountMetricConfig // metric config provided by user.
+	capacity int                             // max observed number of data points added to the metric.
+}
+
+// init fills memcached.slabs.count metric with initial data.
+func (m *metricMemcachedSlabsCount) init() {
+	m.data.SetName("memcached.slabs.count")
+	m.data.SetDescription("Total number of slab classes allocated.")
+	m.data.SetUnit("{slab}")
+	m.data.SetEmptyGauge()
+}
+
+func (m *metricMemcachedSlabsCount) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64) {
+	if !m.config.Enabled {
+		return
+	}
+	dp := m.data.Gauge().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntValue(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsCount) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsCount) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsCount(cfg MemcachedSlabsCountMetricConfig) metricMemcachedSlabsCount {
+	m := metricMemcachedSlabsCount{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsOperations struct {
+	data          pmetric.Metric                       // data buffer for generated metric.
+	config        MemcachedSlabsOperationsMetricConfig // metric config provided by user.
+	capacity      int                                  // max observed number of data points added to the metric.
+	aggDataPoints []int64                              // slice containing number of aggregated datapoints at each index
+}
+
+// init fills memcached.slabs.operations metric with initial data.
+func (m *metricMemcachedSlabsOperations) init() {
+	m.data.SetName("memcached.slabs.operations")
+	m.data.SetDescription("Number of operations serviced by a slab class.")
+	m.data.SetUnit("{operation}")
+	m.data.SetEmptySum()
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pmetric.AggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricMemcachedSlabsOperations) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, slabAttributeValue int64, slabOperationAttributeValue string) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsOperationsMetricAttributeKeySlab) {
+		dp.Attributes().PutInt("slab", slabAttributeValue)
+	}
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsOperationsMetricAttributeKeySlabOperation) {
+		dp.Attributes().PutStr("slab_operation", slabOperationAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Sum().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsOperations) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsOperations) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Sum().DataPoints().At(i).SetIntValue(m.data.Sum().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsOperations(cfg MemcachedSlabsOperationsMetricConfig) metricMemcachedSlabsOperations {
+	m := metricMemcachedSlabsOperations{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsPages struct {
+	data          pmetric.Metric                  // data buffer for generated metric.
+	config        MemcachedSlabsPagesMetricConfig // metric config provided by user.
+	capacity      int                             // max observed number of data points added to the metric.
+	aggDataPoints []int64                         // slice containing number of aggregated datapoints at each index
+}
+
+// init fills memcached.slabs.pages metric with initial data.
+func (m *metricMemcachedSlabsPages) init() {
+	m.data.SetName("memcached.slabs.pages")
+	m.data.SetDescription("Total number of pages allocated to a slab class.")
+	m.data.SetUnit("{page}")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricMemcachedSlabsPages) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsPagesMetricAttributeKeySlab) {
+		dp.Attributes().PutInt("slab", slabAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsPages) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsPages) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsPages(cfg MemcachedSlabsPagesMetricConfig) metricMemcachedSlabsPages {
+	m := metricMemcachedSlabsPages{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricMemcachedSlabsRequestedMemory struct {
+	data          pmetric.Metric                            // data buffer for generated metric.
+	config        MemcachedSlabsRequestedMemoryMetricConfig // metric config provided by user.
+	capacity      int                                       // max observed number of data points added to the metric.
+	aggDataPoints []int64                                   // slice containing number of aggregated datapoints at each index
+}
+
+// init fills memcached.slabs.requested_memory metric with initial data.
+func (m *metricMemcachedSlabsRequestedMemory) init() {
+	m.data.SetName("memcached.slabs.requested_memory")
+	m.data.SetDescription("Number of bytes requested to be stored in a slab class.")
+	m.data.SetUnit("By")
+	m.data.SetEmptyGauge()
+	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
+	m.aggDataPoints = m.aggDataPoints[:0]
+}
+
+func (m *metricMemcachedSlabsRequestedMemory) recordDataPoint(start pcommon.Timestamp, ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	if !m.config.Enabled {
+		return
+	}
+
+	dp := pmetric.NewNumberDataPoint()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	if slices.Contains(m.config.EnabledAttributes, MemcachedSlabsRequestedMemoryMetricAttributeKeySlab) {
+		dp.Attributes().PutInt("slab", slabAttributeValue)
+	}
+
+	var s string
+	dps := m.data.Gauge().DataPoints()
+	for i := 0; i < dps.Len(); i++ {
+		dpi := dps.At(i)
+		if dp.Attributes().Equal(dpi.Attributes()) && dp.StartTimestamp() == dpi.StartTimestamp() && dp.Timestamp() == dpi.Timestamp() {
+			switch s = m.config.AggregationStrategy; s {
+			case AggregationStrategySum, AggregationStrategyAvg:
+				dpi.SetIntValue(dpi.IntValue() + val)
+				m.aggDataPoints[i] += 1
+				return
+			case AggregationStrategyMin:
+				if dpi.IntValue() > val {
+					dpi.SetIntValue(val)
+				}
+				return
+			case AggregationStrategyMax:
+				if dpi.IntValue() < val {
+					dpi.SetIntValue(val)
+				}
+				return
+			}
+		}
+	}
+
+	dp.SetIntValue(val)
+	m.aggDataPoints = append(m.aggDataPoints, 1)
+	dp.MoveTo(dps.AppendEmpty())
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricMemcachedSlabsRequestedMemory) updateCapacity() {
+	if m.data.Gauge().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Gauge().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricMemcachedSlabsRequestedMemory) emit(metrics pmetric.MetricSlice) {
+	if m.config.Enabled && m.data.Gauge().DataPoints().Len() > 0 {
+		if m.config.AggregationStrategy == AggregationStrategyAvg {
+			for i, aggCount := range m.aggDataPoints {
+				m.data.Gauge().DataPoints().At(i).SetIntValue(m.data.Gauge().DataPoints().At(i).IntValue() / aggCount)
+			}
+		}
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricMemcachedSlabsRequestedMemory(cfg MemcachedSlabsRequestedMemoryMetricConfig) metricMemcachedSlabsRequestedMemory {
+	m := metricMemcachedSlabsRequestedMemory{config: cfg}
+
+	if cfg.Enabled {
+		m.data = pmetric.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricMemcachedThreads struct {
 	data     pmetric.Metric               // data buffer for generated metric.
 	config   MemcachedThreadsMetricConfig // metric config provided by user.
@@ -984,22 +1734,30 @@ func newMetricMemcachedThreads(cfg MemcachedThreadsMetricConfig) metricMemcached
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user config.
 type MetricsBuilder struct {
-	config                            MetricsBuilderConfig // config of the metrics builder.
-	startTime                         pcommon.Timestamp    // start time that will be applied to all recorded data points.
-	metricsCapacity                   int                  // maximum observed number of metrics per resource.
-	metricsBuffer                     pmetric.Metrics      // accumulates metrics data before emitting.
-	buildInfo                         component.BuildInfo  // contains version information.
-	metricMemcachedBytes              metricMemcachedBytes
-	metricMemcachedCommands           metricMemcachedCommands
-	metricMemcachedConnectionsCurrent metricMemcachedConnectionsCurrent
-	metricMemcachedConnectionsTotal   metricMemcachedConnectionsTotal
-	metricMemcachedCPUUsage           metricMemcachedCPUUsage
-	metricMemcachedCurrentItems       metricMemcachedCurrentItems
-	metricMemcachedEvictions          metricMemcachedEvictions
-	metricMemcachedNetwork            metricMemcachedNetwork
-	metricMemcachedOperationHitRatio  metricMemcachedOperationHitRatio
-	metricMemcachedOperations         metricMemcachedOperations
-	metricMemcachedThreads            metricMemcachedThreads
+	config                              MetricsBuilderConfig // config of the metrics builder.
+	startTime                           pcommon.Timestamp    // start time that will be applied to all recorded data points.
+	metricsCapacity                     int                  // maximum observed number of metrics per resource.
+	metricsBuffer                       pmetric.Metrics      // accumulates metrics data before emitting.
+	buildInfo                           component.BuildInfo  // contains version information.
+	metricMemcachedBytes                metricMemcachedBytes
+	metricMemcachedCommands             metricMemcachedCommands
+	metricMemcachedConnectionsCurrent   metricMemcachedConnectionsCurrent
+	metricMemcachedConnectionsTotal     metricMemcachedConnectionsTotal
+	metricMemcachedCPUUsage             metricMemcachedCPUUsage
+	metricMemcachedCurrentItems         metricMemcachedCurrentItems
+	metricMemcachedEvictions            metricMemcachedEvictions
+	metricMemcachedNetwork              metricMemcachedNetwork
+	metricMemcachedOperationHitRatio    metricMemcachedOperationHitRatio
+	metricMemcachedOperations           metricMemcachedOperations
+	metricMemcachedSlabsAllocatedMemory metricMemcachedSlabsAllocatedMemory
+	metricMemcachedSlabsChunkSize       metricMemcachedSlabsChunkSize
+	metricMemcachedSlabsChunks          metricMemcachedSlabsChunks
+	metricMemcachedSlabsChunksPerPage   metricMemcachedSlabsChunksPerPage
+	metricMemcachedSlabsCount           metricMemcachedSlabsCount
+	metricMemcachedSlabsOperations      metricMemcachedSlabsOperations
+	metricMemcachedSlabsPages           metricMemcachedSlabsPages
+	metricMemcachedSlabsRequestedMemory metricMemcachedSlabsRequestedMemory
+	metricMemcachedThreads              metricMemcachedThreads
 }
 
 // MetricBuilderOption applies changes to default metrics builder.
@@ -1021,21 +1779,29 @@ func WithStartTime(startTime pcommon.Timestamp) MetricBuilderOption {
 }
 func NewMetricsBuilder(mbc MetricsBuilderConfig, settings receiver.Settings, options ...MetricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		config:                            mbc,
-		startTime:                         pcommon.NewTimestampFromTime(time.Now()),
-		metricsBuffer:                     pmetric.NewMetrics(),
-		buildInfo:                         settings.BuildInfo,
-		metricMemcachedBytes:              newMetricMemcachedBytes(mbc.Metrics.MemcachedBytes),
-		metricMemcachedCommands:           newMetricMemcachedCommands(mbc.Metrics.MemcachedCommands),
-		metricMemcachedConnectionsCurrent: newMetricMemcachedConnectionsCurrent(mbc.Metrics.MemcachedConnectionsCurrent),
-		metricMemcachedConnectionsTotal:   newMetricMemcachedConnectionsTotal(mbc.Metrics.MemcachedConnectionsTotal),
-		metricMemcachedCPUUsage:           newMetricMemcachedCPUUsage(mbc.Metrics.MemcachedCPUUsage),
-		metricMemcachedCurrentItems:       newMetricMemcachedCurrentItems(mbc.Metrics.MemcachedCurrentItems),
-		metricMemcachedEvictions:          newMetricMemcachedEvictions(mbc.Metrics.MemcachedEvictions),
-		metricMemcachedNetwork:            newMetricMemcachedNetwork(mbc.Metrics.MemcachedNetwork),
-		metricMemcachedOperationHitRatio:  newMetricMemcachedOperationHitRatio(mbc.Metrics.MemcachedOperationHitRatio),
-		metricMemcachedOperations:         newMetricMemcachedOperations(mbc.Metrics.MemcachedOperations),
-		metricMemcachedThreads:            newMetricMemcachedThreads(mbc.Metrics.MemcachedThreads),
+		config:                              mbc,
+		startTime:                           pcommon.NewTimestampFromTime(time.Now()),
+		metricsBuffer:                       pmetric.NewMetrics(),
+		buildInfo:                           settings.BuildInfo,
+		metricMemcachedBytes:                newMetricMemcachedBytes(mbc.Metrics.MemcachedBytes),
+		metricMemcachedCommands:             newMetricMemcachedCommands(mbc.Metrics.MemcachedCommands),
+		metricMemcachedConnectionsCurrent:   newMetricMemcachedConnectionsCurrent(mbc.Metrics.MemcachedConnectionsCurrent),
+		metricMemcachedConnectionsTotal:     newMetricMemcachedConnectionsTotal(mbc.Metrics.MemcachedConnectionsTotal),
+		metricMemcachedCPUUsage:             newMetricMemcachedCPUUsage(mbc.Metrics.MemcachedCPUUsage),
+		metricMemcachedCurrentItems:         newMetricMemcachedCurrentItems(mbc.Metrics.MemcachedCurrentItems),
+		metricMemcachedEvictions:            newMetricMemcachedEvictions(mbc.Metrics.MemcachedEvictions),
+		metricMemcachedNetwork:              newMetricMemcachedNetwork(mbc.Metrics.MemcachedNetwork),
+		metricMemcachedOperationHitRatio:    newMetricMemcachedOperationHitRatio(mbc.Metrics.MemcachedOperationHitRatio),
+		metricMemcachedOperations:           newMetricMemcachedOperations(mbc.Metrics.MemcachedOperations),
+		metricMemcachedSlabsAllocatedMemory: newMetricMemcachedSlabsAllocatedMemory(mbc.Metrics.MemcachedSlabsAllocatedMemory),
+		metricMemcachedSlabsChunkSize:       newMetricMemcachedSlabsChunkSize(mbc.Metrics.MemcachedSlabsChunkSize),
+		metricMemcachedSlabsChunks:          newMetricMemcachedSlabsChunks(mbc.Metrics.MemcachedSlabsChunks),
+		metricMemcachedSlabsChunksPerPage:   newMetricMemcachedSlabsChunksPerPage(mbc.Metrics.MemcachedSlabsChunksPerPage),
+		metricMemcachedSlabsCount:           newMetricMemcachedSlabsCount(mbc.Metrics.MemcachedSlabsCount),
+		metricMemcachedSlabsOperations:      newMetricMemcachedSlabsOperations(mbc.Metrics.MemcachedSlabsOperations),
+		metricMemcachedSlabsPages:           newMetricMemcachedSlabsPages(mbc.Metrics.MemcachedSlabsPages),
+		metricMemcachedSlabsRequestedMemory: newMetricMemcachedSlabsRequestedMemory(mbc.Metrics.MemcachedSlabsRequestedMemory),
+		metricMemcachedThreads:              newMetricMemcachedThreads(mbc.Metrics.MemcachedThreads),
 	}
 
 	for _, op := range options {
@@ -1111,6 +1877,14 @@ func (mb *MetricsBuilder) EmitForResource(options ...ResourceMetricsOption) {
 	mb.metricMemcachedNetwork.emit(ils.Metrics())
 	mb.metricMemcachedOperationHitRatio.emit(ils.Metrics())
 	mb.metricMemcachedOperations.emit(ils.Metrics())
+	mb.metricMemcachedSlabsAllocatedMemory.emit(ils.Metrics())
+	mb.metricMemcachedSlabsChunkSize.emit(ils.Metrics())
+	mb.metricMemcachedSlabsChunks.emit(ils.Metrics())
+	mb.metricMemcachedSlabsChunksPerPage.emit(ils.Metrics())
+	mb.metricMemcachedSlabsCount.emit(ils.Metrics())
+	mb.metricMemcachedSlabsOperations.emit(ils.Metrics())
+	mb.metricMemcachedSlabsPages.emit(ils.Metrics())
+	mb.metricMemcachedSlabsRequestedMemory.emit(ils.Metrics())
 	mb.metricMemcachedThreads.emit(ils.Metrics())
 
 	for _, op := range options {
@@ -1181,6 +1955,46 @@ func (mb *MetricsBuilder) RecordMemcachedOperationHitRatioDataPoint(ts pcommon.T
 // RecordMemcachedOperationsDataPoint adds a data point to memcached.operations metric.
 func (mb *MetricsBuilder) RecordMemcachedOperationsDataPoint(ts pcommon.Timestamp, val int64, typeAttributeValue AttributeType, operationAttributeValue AttributeOperation) {
 	mb.metricMemcachedOperations.recordDataPoint(mb.startTime, ts, val, typeAttributeValue.String(), operationAttributeValue.String())
+}
+
+// RecordMemcachedSlabsAllocatedMemoryDataPoint adds a data point to memcached.slabs.allocated_memory metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsAllocatedMemoryDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricMemcachedSlabsAllocatedMemory.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordMemcachedSlabsChunkSizeDataPoint adds a data point to memcached.slabs.chunk_size metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsChunkSizeDataPoint(ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	mb.metricMemcachedSlabsChunkSize.recordDataPoint(mb.startTime, ts, val, slabAttributeValue)
+}
+
+// RecordMemcachedSlabsChunksDataPoint adds a data point to memcached.slabs.chunks metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsChunksDataPoint(ts pcommon.Timestamp, val int64, slabAttributeValue int64, slabChunkStateAttributeValue AttributeSlabChunkState) {
+	mb.metricMemcachedSlabsChunks.recordDataPoint(mb.startTime, ts, val, slabAttributeValue, slabChunkStateAttributeValue.String())
+}
+
+// RecordMemcachedSlabsChunksPerPageDataPoint adds a data point to memcached.slabs.chunks_per_page metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsChunksPerPageDataPoint(ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	mb.metricMemcachedSlabsChunksPerPage.recordDataPoint(mb.startTime, ts, val, slabAttributeValue)
+}
+
+// RecordMemcachedSlabsCountDataPoint adds a data point to memcached.slabs.count metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsCountDataPoint(ts pcommon.Timestamp, val int64) {
+	mb.metricMemcachedSlabsCount.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordMemcachedSlabsOperationsDataPoint adds a data point to memcached.slabs.operations metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsOperationsDataPoint(ts pcommon.Timestamp, val int64, slabAttributeValue int64, slabOperationAttributeValue AttributeSlabOperation) {
+	mb.metricMemcachedSlabsOperations.recordDataPoint(mb.startTime, ts, val, slabAttributeValue, slabOperationAttributeValue.String())
+}
+
+// RecordMemcachedSlabsPagesDataPoint adds a data point to memcached.slabs.pages metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsPagesDataPoint(ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	mb.metricMemcachedSlabsPages.recordDataPoint(mb.startTime, ts, val, slabAttributeValue)
+}
+
+// RecordMemcachedSlabsRequestedMemoryDataPoint adds a data point to memcached.slabs.requested_memory metric.
+func (mb *MetricsBuilder) RecordMemcachedSlabsRequestedMemoryDataPoint(ts pcommon.Timestamp, val int64, slabAttributeValue int64) {
+	mb.metricMemcachedSlabsRequestedMemory.recordDataPoint(mb.startTime, ts, val, slabAttributeValue)
 }
 
 // RecordMemcachedThreadsDataPoint adds a data point to memcached.threads metric.

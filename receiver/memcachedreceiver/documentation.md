@@ -130,3 +130,115 @@ Number of threads used by the memcached instance.
 | Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic | Stability |
 | ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
 | {threads} | Sum | Int | Cumulative | false | Development |
+
+## Optional Metrics
+
+The following metrics are not emitted by default. Each of them can be enabled by applying the following configuration:
+
+```yaml
+metrics:
+  <metric_name>:
+    enabled: true
+```
+
+### memcached.slabs.allocated_memory
+
+Total memory allocated to slab pages.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| By | Gauge | Int | Development |
+
+### memcached.slabs.chunk_size
+
+The amount of space each chunk uses in a slab class.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| By | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| slab | The slab class id (chunk-size class) the metric pertains to. | Any Int | Recommended | - |
+
+### memcached.slabs.chunks
+
+Number of chunks in a slab class, by allocation state.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {chunk} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| slab | The slab class id (chunk-size class) the metric pertains to. | Any Int | Recommended | - |
+| slab_chunk_state | The allocation state of chunks within a slab class. | Str: ``used``, ``free``, ``total`` | Recommended | - |
+
+### memcached.slabs.chunks_per_page
+
+Number of chunks within a single page in a slab class.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {chunk} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| slab | The slab class id (chunk-size class) the metric pertains to. | Any Int | Recommended | - |
+
+### memcached.slabs.count
+
+Total number of slab classes allocated.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {slab} | Gauge | Int | Development |
+
+### memcached.slabs.operations
+
+Number of operations serviced by a slab class.
+
+| Unit | Metric Type | Value Type | Aggregation Temporality | Monotonic | Stability |
+| ---- | ----------- | ---------- | ----------------------- | --------- | --------- |
+| {operation} | Sum | Int | Cumulative | true | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| slab | The slab class id (chunk-size class) the metric pertains to. | Any Int | Recommended | - |
+| slab_operation | The type of operation serviced by a slab class. | Str: ``set``, ``get``, ``delete``, ``increment``, ``decrement``, ``touch``, ``cas`` | Recommended | - |
+
+### memcached.slabs.pages
+
+Total number of pages allocated to a slab class.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| {page} | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| slab | The slab class id (chunk-size class) the metric pertains to. | Any Int | Recommended | - |
+
+### memcached.slabs.requested_memory
+
+Number of bytes requested to be stored in a slab class.
+
+| Unit | Metric Type | Value Type | Stability |
+| ---- | ----------- | ---------- | --------- |
+| By | Gauge | Int | Development |
+
+#### Attributes
+
+| Name | Description | Values | Requirement Level | Semantic Convention |
+| ---- | ----------- | ------ | ----------------- | ------------------- |
+| slab | The slab class id (chunk-size class) the metric pertains to. | Any Int | Recommended | - |

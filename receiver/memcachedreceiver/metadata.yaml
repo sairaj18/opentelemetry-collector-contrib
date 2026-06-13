@@ -43,6 +43,30 @@ attributes:
       - increment
       - decrement
       - get
+  slab:
+    description: The slab class id (chunk-size class) the metric pertains to.
+    requirement_level: recommended
+    type: int
+  slab_chunk_state:
+    description: The allocation state of chunks within a slab class.
+    requirement_level: recommended
+    type: string
+    enum:
+      - used
+      - free
+      - total
+  slab_operation:
+    description: The type of operation serviced by a slab class.
+    requirement_level: recommended
+    type: string
+    enum:
+      - set
+      - get
+      - delete
+      - increment
+      - decrement
+      - touch
+      - cas
   state:
     description: The type of CPU usage.
     requirement_level: recommended
@@ -155,6 +179,72 @@ metrics:
       monotonic: true
       aggregation_temporality: cumulative
     attributes: [type, operation]
+  memcached.slabs.allocated_memory:
+    enabled: false
+    description: Total memory allocated to slab pages.
+    stability: development
+    unit: By
+    gauge:
+      value_type: int
+    attributes: []
+  memcached.slabs.chunk_size:
+    enabled: false
+    description: The amount of space each chunk uses in a slab class.
+    stability: development
+    unit: By
+    gauge:
+      value_type: int
+    attributes: [slab]
+  memcached.slabs.chunks:
+    enabled: false
+    description: Number of chunks in a slab class, by allocation state.
+    stability: development
+    unit: "{chunk}"
+    gauge:
+      value_type: int
+    attributes: [slab, slab_chunk_state]
+  memcached.slabs.chunks_per_page:
+    enabled: false
+    description: Number of chunks within a single page in a slab class.
+    stability: development
+    unit: "{chunk}"
+    gauge:
+      value_type: int
+    attributes: [slab]
+  memcached.slabs.count:
+    enabled: false
+    description: Total number of slab classes allocated.
+    stability: development
+    unit: "{slab}"
+    gauge:
+      value_type: int
+    attributes: []
+  memcached.slabs.operations:
+    enabled: false
+    description: Number of operations serviced by a slab class.
+    stability: development
+    unit: "{operation}"
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation_temporality: cumulative
+    attributes: [slab, slab_operation]
+  memcached.slabs.pages:
+    enabled: false
+    description: Total number of pages allocated to a slab class.
+    stability: development
+    unit: "{page}"
+    gauge:
+      value_type: int
+    attributes: [slab]
+  memcached.slabs.requested_memory:
+    enabled: false
+    description: Number of bytes requested to be stored in a slab class.
+    stability: development
+    unit: By
+    gauge:
+      value_type: int
+    attributes: [slab]
   memcached.threads:
     enabled: true
     description: Number of threads used by the memcached instance.

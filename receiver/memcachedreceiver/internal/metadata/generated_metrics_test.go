@@ -63,6 +63,12 @@ func TestMetricsBuilder(t *testing.T) {
 			aggMap["memcached.network"] = mb.metricMemcachedNetwork.config.AggregationStrategy
 			aggMap["memcached.operation_hit_ratio"] = mb.metricMemcachedOperationHitRatio.config.AggregationStrategy
 			aggMap["memcached.operations"] = mb.metricMemcachedOperations.config.AggregationStrategy
+			aggMap["memcached.slabs.chunk_size"] = mb.metricMemcachedSlabsChunkSize.config.AggregationStrategy
+			aggMap["memcached.slabs.chunks"] = mb.metricMemcachedSlabsChunks.config.AggregationStrategy
+			aggMap["memcached.slabs.chunks_per_page"] = mb.metricMemcachedSlabsChunksPerPage.config.AggregationStrategy
+			aggMap["memcached.slabs.operations"] = mb.metricMemcachedSlabsOperations.config.AggregationStrategy
+			aggMap["memcached.slabs.pages"] = mb.metricMemcachedSlabsPages.config.AggregationStrategy
+			aggMap["memcached.slabs.requested_memory"] = mb.metricMemcachedSlabsRequestedMemory.config.AggregationStrategy
 
 			expectedWarnings := 0
 			if tt.metricsSet != testDataSetReag {
@@ -127,6 +133,48 @@ func TestMetricsBuilder(t *testing.T) {
 				mb.RecordMemcachedOperationsDataPoint(ts, 3, AttributeTypeMiss, AttributeOperationDecrement)
 			}
 
+			allMetricsCount++
+			mb.RecordMemcachedSlabsAllocatedMemoryDataPoint(ts, 1)
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsChunkSizeDataPoint(ts, 1, 4)
+			if tt.name == "reaggregate_set" {
+				mb.RecordMemcachedSlabsChunkSizeDataPoint(ts, 3, 5)
+			}
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsChunksDataPoint(ts, 1, 4, AttributeSlabChunkStateUsed)
+			if tt.name == "reaggregate_set" {
+				mb.RecordMemcachedSlabsChunksDataPoint(ts, 3, 5, AttributeSlabChunkStateFree)
+			}
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsChunksPerPageDataPoint(ts, 1, 4)
+			if tt.name == "reaggregate_set" {
+				mb.RecordMemcachedSlabsChunksPerPageDataPoint(ts, 3, 5)
+			}
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsCountDataPoint(ts, 1)
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsOperationsDataPoint(ts, 1, 4, AttributeSlabOperationSet)
+			if tt.name == "reaggregate_set" {
+				mb.RecordMemcachedSlabsOperationsDataPoint(ts, 3, 5, AttributeSlabOperationGet)
+			}
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsPagesDataPoint(ts, 1, 4)
+			if tt.name == "reaggregate_set" {
+				mb.RecordMemcachedSlabsPagesDataPoint(ts, 3, 5)
+			}
+
+			allMetricsCount++
+			mb.RecordMemcachedSlabsRequestedMemoryDataPoint(ts, 1, 4)
+			if tt.name == "reaggregate_set" {
+				mb.RecordMemcachedSlabsRequestedMemoryDataPoint(ts, 3, 5)
+			}
+
 			defaultMetricsCount++
 			allMetricsCount++
 			mb.RecordMemcachedThreadsDataPoint(ts, 1)
@@ -139,6 +187,12 @@ func TestMetricsBuilder(t *testing.T) {
 				assert.Empty(t, mb.metricMemcachedNetwork.aggDataPoints)
 				assert.Empty(t, mb.metricMemcachedOperationHitRatio.aggDataPoints)
 				assert.Empty(t, mb.metricMemcachedOperations.aggDataPoints)
+				assert.Empty(t, mb.metricMemcachedSlabsChunkSize.aggDataPoints)
+				assert.Empty(t, mb.metricMemcachedSlabsChunks.aggDataPoints)
+				assert.Empty(t, mb.metricMemcachedSlabsChunksPerPage.aggDataPoints)
+				assert.Empty(t, mb.metricMemcachedSlabsOperations.aggDataPoints)
+				assert.Empty(t, mb.metricMemcachedSlabsPages.aggDataPoints)
+				assert.Empty(t, mb.metricMemcachedSlabsRequestedMemory.aggDataPoints)
 			}
 
 			if tt.expectEmpty {
@@ -453,6 +507,284 @@ func TestMetricsBuilder(t *testing.T) {
 						_, ok := dp.Attributes().Get("type")
 						assert.False(t, ok)
 						_, ok = dp.Attributes().Get("operation")
+						assert.False(t, ok)
+					}
+				case "memcached.slabs.allocated_memory":
+					assert.False(t, validatedMetrics["memcached.slabs.allocated_memory"], "Found a duplicate in the metrics slice: memcached.slabs.allocated_memory")
+					validatedMetrics["memcached.slabs.allocated_memory"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Total memory allocated to slab pages.", mi.Description())
+					assert.Equal(t, "By", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "memcached.slabs.chunk_size":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["memcached.slabs.chunk_size"], "Found a duplicate in the metrics slice: memcached.slabs.chunk_size")
+						validatedMetrics["memcached.slabs.chunk_size"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The amount of space each chunk uses in a slab class.", mi.Description())
+						assert.Equal(t, "By", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						slabAttrVal, ok := dp.Attributes().Get("slab")
+						assert.True(t, ok)
+						assert.EqualValues(t, 4, slabAttrVal.Int())
+					} else {
+						assert.False(t, validatedMetrics["memcached.slabs.chunk_size"], "Found a duplicate in the metrics slice: memcached.slabs.chunk_size")
+						validatedMetrics["memcached.slabs.chunk_size"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "The amount of space each chunk uses in a slab class.", mi.Description())
+						assert.Equal(t, "By", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["memcached.slabs.chunk_size"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("slab")
+						assert.False(t, ok)
+					}
+				case "memcached.slabs.chunks":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["memcached.slabs.chunks"], "Found a duplicate in the metrics slice: memcached.slabs.chunks")
+						validatedMetrics["memcached.slabs.chunks"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Number of chunks in a slab class, by allocation state.", mi.Description())
+						assert.Equal(t, "{chunk}", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						slabAttrVal, ok := dp.Attributes().Get("slab")
+						assert.True(t, ok)
+						assert.EqualValues(t, 4, slabAttrVal.Int())
+						slabChunkStateAttrVal, ok := dp.Attributes().Get("slab_chunk_state")
+						assert.True(t, ok)
+						assert.Equal(t, "used", slabChunkStateAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["memcached.slabs.chunks"], "Found a duplicate in the metrics slice: memcached.slabs.chunks")
+						validatedMetrics["memcached.slabs.chunks"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Number of chunks in a slab class, by allocation state.", mi.Description())
+						assert.Equal(t, "{chunk}", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["memcached.slabs.chunks"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("slab")
+						assert.False(t, ok)
+						_, ok = dp.Attributes().Get("slab_chunk_state")
+						assert.False(t, ok)
+					}
+				case "memcached.slabs.chunks_per_page":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["memcached.slabs.chunks_per_page"], "Found a duplicate in the metrics slice: memcached.slabs.chunks_per_page")
+						validatedMetrics["memcached.slabs.chunks_per_page"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Number of chunks within a single page in a slab class.", mi.Description())
+						assert.Equal(t, "{chunk}", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						slabAttrVal, ok := dp.Attributes().Get("slab")
+						assert.True(t, ok)
+						assert.EqualValues(t, 4, slabAttrVal.Int())
+					} else {
+						assert.False(t, validatedMetrics["memcached.slabs.chunks_per_page"], "Found a duplicate in the metrics slice: memcached.slabs.chunks_per_page")
+						validatedMetrics["memcached.slabs.chunks_per_page"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Number of chunks within a single page in a slab class.", mi.Description())
+						assert.Equal(t, "{chunk}", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["memcached.slabs.chunks_per_page"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("slab")
+						assert.False(t, ok)
+					}
+				case "memcached.slabs.count":
+					assert.False(t, validatedMetrics["memcached.slabs.count"], "Found a duplicate in the metrics slice: memcached.slabs.count")
+					validatedMetrics["memcached.slabs.count"] = true
+					assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+					assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+					assert.Equal(t, "Total number of slab classes allocated.", mi.Description())
+					assert.Equal(t, "{slab}", mi.Unit())
+					dp := mi.Gauge().DataPoints().At(0)
+					assert.Equal(t, start, dp.StartTimestamp())
+					assert.Equal(t, ts, dp.Timestamp())
+					assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+					assert.Equal(t, int64(1), dp.IntValue())
+				case "memcached.slabs.operations":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["memcached.slabs.operations"], "Found a duplicate in the metrics slice: memcached.slabs.operations")
+						validatedMetrics["memcached.slabs.operations"] = true
+						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
+						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						assert.Equal(t, "Number of operations serviced by a slab class.", mi.Description())
+						assert.Equal(t, "{operation}", mi.Unit())
+						assert.True(t, mi.Sum().IsMonotonic())
+						assert.Equal(t, pmetric.AggregationTemporalityCumulative, mi.Sum().AggregationTemporality())
+						dp := mi.Sum().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						slabAttrVal, ok := dp.Attributes().Get("slab")
+						assert.True(t, ok)
+						assert.EqualValues(t, 4, slabAttrVal.Int())
+						slabOperationAttrVal, ok := dp.Attributes().Get("slab_operation")
+						assert.True(t, ok)
+						assert.Equal(t, "set", slabOperationAttrVal.Str())
+					} else {
+						assert.False(t, validatedMetrics["memcached.slabs.operations"], "Found a duplicate in the metrics slice: memcached.slabs.operations")
+						validatedMetrics["memcached.slabs.operations"] = true
+						assert.Equal(t, pmetric.MetricTypeSum, mi.Type())
+						assert.Equal(t, 1, mi.Sum().DataPoints().Len())
+						assert.Equal(t, "Number of operations serviced by a slab class.", mi.Description())
+						assert.Equal(t, "{operation}", mi.Unit())
+						assert.True(t, mi.Sum().IsMonotonic())
+						assert.Equal(t, pmetric.AggregationTemporalityCumulative, mi.Sum().AggregationTemporality())
+						dp := mi.Sum().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["memcached.slabs.operations"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("slab")
+						assert.False(t, ok)
+						_, ok = dp.Attributes().Get("slab_operation")
+						assert.False(t, ok)
+					}
+				case "memcached.slabs.pages":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["memcached.slabs.pages"], "Found a duplicate in the metrics slice: memcached.slabs.pages")
+						validatedMetrics["memcached.slabs.pages"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Total number of pages allocated to a slab class.", mi.Description())
+						assert.Equal(t, "{page}", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						slabAttrVal, ok := dp.Attributes().Get("slab")
+						assert.True(t, ok)
+						assert.EqualValues(t, 4, slabAttrVal.Int())
+					} else {
+						assert.False(t, validatedMetrics["memcached.slabs.pages"], "Found a duplicate in the metrics slice: memcached.slabs.pages")
+						validatedMetrics["memcached.slabs.pages"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Total number of pages allocated to a slab class.", mi.Description())
+						assert.Equal(t, "{page}", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["memcached.slabs.pages"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("slab")
+						assert.False(t, ok)
+					}
+				case "memcached.slabs.requested_memory":
+					if tt.name != "reaggregate_set" {
+						assert.False(t, validatedMetrics["memcached.slabs.requested_memory"], "Found a duplicate in the metrics slice: memcached.slabs.requested_memory")
+						validatedMetrics["memcached.slabs.requested_memory"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Number of bytes requested to be stored in a slab class.", mi.Description())
+						assert.Equal(t, "By", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						assert.Equal(t, int64(1), dp.IntValue())
+						slabAttrVal, ok := dp.Attributes().Get("slab")
+						assert.True(t, ok)
+						assert.EqualValues(t, 4, slabAttrVal.Int())
+					} else {
+						assert.False(t, validatedMetrics["memcached.slabs.requested_memory"], "Found a duplicate in the metrics slice: memcached.slabs.requested_memory")
+						validatedMetrics["memcached.slabs.requested_memory"] = true
+						assert.Equal(t, pmetric.MetricTypeGauge, mi.Type())
+						assert.Equal(t, 1, mi.Gauge().DataPoints().Len())
+						assert.Equal(t, "Number of bytes requested to be stored in a slab class.", mi.Description())
+						assert.Equal(t, "By", mi.Unit())
+						dp := mi.Gauge().DataPoints().At(0)
+						assert.Equal(t, start, dp.StartTimestamp())
+						assert.Equal(t, ts, dp.Timestamp())
+						assert.Equal(t, pmetric.NumberDataPointValueTypeInt, dp.ValueType())
+						switch aggMap["memcached.slabs.requested_memory"] {
+						case "sum":
+							assert.Equal(t, int64(4), dp.IntValue())
+						case "avg":
+							assert.Equal(t, int64(2), dp.IntValue())
+						case "min":
+							assert.Equal(t, int64(1), dp.IntValue())
+						case "max":
+							assert.Equal(t, int64(3), dp.IntValue())
+						}
+						_, ok := dp.Attributes().Get("slab")
 						assert.False(t, ok)
 					}
 				case "memcached.threads":

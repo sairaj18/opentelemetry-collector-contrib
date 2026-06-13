@@ -66,6 +66,42 @@ func TestMetricsBuilderConfig(t *testing.T) {
 						AggregationStrategy: AggregationStrategySum,
 						EnabledAttributes:   []MemcachedOperationsMetricAttributeKey{MemcachedOperationsMetricAttributeKeyType, MemcachedOperationsMetricAttributeKeyOperation},
 					},
+					MemcachedSlabsAllocatedMemory: MemcachedSlabsAllocatedMemoryMetricConfig{
+						Enabled: true,
+					},
+					MemcachedSlabsChunkSize: MemcachedSlabsChunkSizeMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsChunkSizeMetricAttributeKey{MemcachedSlabsChunkSizeMetricAttributeKeySlab},
+					},
+					MemcachedSlabsChunks: MemcachedSlabsChunksMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsChunksMetricAttributeKey{MemcachedSlabsChunksMetricAttributeKeySlab, MemcachedSlabsChunksMetricAttributeKeySlabChunkState},
+					},
+					MemcachedSlabsChunksPerPage: MemcachedSlabsChunksPerPageMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsChunksPerPageMetricAttributeKey{MemcachedSlabsChunksPerPageMetricAttributeKeySlab},
+					},
+					MemcachedSlabsCount: MemcachedSlabsCountMetricConfig{
+						Enabled: true,
+					},
+					MemcachedSlabsOperations: MemcachedSlabsOperationsMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []MemcachedSlabsOperationsMetricAttributeKey{MemcachedSlabsOperationsMetricAttributeKeySlab, MemcachedSlabsOperationsMetricAttributeKeySlabOperation},
+					},
+					MemcachedSlabsPages: MemcachedSlabsPagesMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsPagesMetricAttributeKey{MemcachedSlabsPagesMetricAttributeKeySlab},
+					},
+					MemcachedSlabsRequestedMemory: MemcachedSlabsRequestedMemoryMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsRequestedMemoryMetricAttributeKey{MemcachedSlabsRequestedMemoryMetricAttributeKeySlab},
+					},
 					MemcachedThreads: MemcachedThreadsMetricConfig{
 						Enabled: true,
 					},
@@ -116,6 +152,42 @@ func TestMetricsBuilderConfig(t *testing.T) {
 						AggregationStrategy: AggregationStrategySum,
 						EnabledAttributes:   []MemcachedOperationsMetricAttributeKey{MemcachedOperationsMetricAttributeKeyType, MemcachedOperationsMetricAttributeKeyOperation},
 					},
+					MemcachedSlabsAllocatedMemory: MemcachedSlabsAllocatedMemoryMetricConfig{
+						Enabled: false,
+					},
+					MemcachedSlabsChunkSize: MemcachedSlabsChunkSizeMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsChunkSizeMetricAttributeKey{MemcachedSlabsChunkSizeMetricAttributeKeySlab},
+					},
+					MemcachedSlabsChunks: MemcachedSlabsChunksMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsChunksMetricAttributeKey{MemcachedSlabsChunksMetricAttributeKeySlab, MemcachedSlabsChunksMetricAttributeKeySlabChunkState},
+					},
+					MemcachedSlabsChunksPerPage: MemcachedSlabsChunksPerPageMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsChunksPerPageMetricAttributeKey{MemcachedSlabsChunksPerPageMetricAttributeKeySlab},
+					},
+					MemcachedSlabsCount: MemcachedSlabsCountMetricConfig{
+						Enabled: false,
+					},
+					MemcachedSlabsOperations: MemcachedSlabsOperationsMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategySum,
+						EnabledAttributes:   []MemcachedSlabsOperationsMetricAttributeKey{MemcachedSlabsOperationsMetricAttributeKeySlab, MemcachedSlabsOperationsMetricAttributeKeySlabOperation},
+					},
+					MemcachedSlabsPages: MemcachedSlabsPagesMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsPagesMetricAttributeKey{MemcachedSlabsPagesMetricAttributeKeySlab},
+					},
+					MemcachedSlabsRequestedMemory: MemcachedSlabsRequestedMemoryMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []MemcachedSlabsRequestedMemoryMetricAttributeKey{MemcachedSlabsRequestedMemoryMetricAttributeKeySlab},
+					},
 					MemcachedThreads: MemcachedThreadsMetricConfig{
 						Enabled: false,
 					},
@@ -126,7 +198,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MemcachedBytesMetricConfig{}, MemcachedCommandsMetricConfig{}, MemcachedConnectionsCurrentMetricConfig{}, MemcachedConnectionsTotalMetricConfig{}, MemcachedCPUUsageMetricConfig{}, MemcachedCurrentItemsMetricConfig{}, MemcachedEvictionsMetricConfig{}, MemcachedNetworkMetricConfig{}, MemcachedOperationHitRatioMetricConfig{}, MemcachedOperationsMetricConfig{}, MemcachedThreadsMetricConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(MemcachedBytesMetricConfig{}, MemcachedCommandsMetricConfig{}, MemcachedConnectionsCurrentMetricConfig{}, MemcachedConnectionsTotalMetricConfig{}, MemcachedCPUUsageMetricConfig{}, MemcachedCurrentItemsMetricConfig{}, MemcachedEvictionsMetricConfig{}, MemcachedNetworkMetricConfig{}, MemcachedOperationHitRatioMetricConfig{}, MemcachedOperationsMetricConfig{}, MemcachedSlabsAllocatedMemoryMetricConfig{}, MemcachedSlabsChunkSizeMetricConfig{}, MemcachedSlabsChunksMetricConfig{}, MemcachedSlabsChunksPerPageMetricConfig{}, MemcachedSlabsCountMetricConfig{}, MemcachedSlabsOperationsMetricConfig{}, MemcachedSlabsPagesMetricConfig{}, MemcachedSlabsRequestedMemoryMetricConfig{}, MemcachedThreadsMetricConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

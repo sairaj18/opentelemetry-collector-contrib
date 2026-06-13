@@ -144,6 +144,80 @@ func (r *memcachedScraper) scrape(_ context.Context) (pmetric.Metrics, error) {
 				if parsedV, ok := r.parseFloat(k, v); ok {
 					r.mb.RecordMemcachedCPUUsageDataPoint(now, parsedV, metadata.AttributeStateUser)
 				}
+			// Global slab stats (from "stats slabs"; parsed into the top-level Stats map).
+			case "active_slabs":
+				if parsedV, ok := r.parseInt(k, v); ok {
+					r.mb.RecordMemcachedSlabsCountDataPoint(now, parsedV)
+				}
+			case "total_malloced":
+				if parsedV, ok := r.parseInt(k, v); ok {
+					r.mb.RecordMemcachedSlabsAllocatedMemoryDataPoint(now, parsedV)
+				}
+			}
+		}
+
+		// Per-slab-class stats from the "stats slabs" command.
+		for slabID, slabStats := range stats.Slabs {
+			id := int64(slabID)
+			for k, v := range slabStats {
+				switch k {
+				case "chunk_size":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsChunkSizeDataPoint(now, parsedV, id)
+					}
+				case "chunks_per_page":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsChunksPerPageDataPoint(now, parsedV, id)
+					}
+				case "total_pages":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsPagesDataPoint(now, parsedV, id)
+					}
+				case "total_chunks":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsChunksDataPoint(now, parsedV, id, metadata.AttributeSlabChunkStateTotal)
+					}
+				case "used_chunks":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsChunksDataPoint(now, parsedV, id, metadata.AttributeSlabChunkStateUsed)
+					}
+				case "free_chunks":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsChunksDataPoint(now, parsedV, id, metadata.AttributeSlabChunkStateFree)
+					}
+				case "mem_requested":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsRequestedMemoryDataPoint(now, parsedV, id)
+					}
+				case "cmd_set":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationSet)
+					}
+				case "get_hits":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationGet)
+					}
+				case "delete_hits":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationDelete)
+					}
+				case "incr_hits":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationIncrement)
+					}
+				case "decr_hits":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationDecrement)
+					}
+				case "touch_hits":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationTouch)
+					}
+				case "cas_hits":
+					if parsedV, ok := r.parseInt(k, v); ok {
+						r.mb.RecordMemcachedSlabsOperationsDataPoint(now, parsedV, id, metadata.AttributeSlabOperationCas)
+					}
+				}
 			}
 		}
 

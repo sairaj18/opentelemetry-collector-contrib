@@ -349,6 +349,336 @@ func (ms *MemcachedOperationsMetricConfig) Validate() error {
 	return nil
 }
 
+// MemcachedSlabsAllocatedMemoryMetricConfig provides config for the memcached.slabs.allocated_memory metric.
+type MemcachedSlabsAllocatedMemoryMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *MemcachedSlabsAllocatedMemoryMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// MemcachedSlabsChunkSizeMetricAttributeKey specifies the key of an attribute for the memcached.slabs.chunk_size metric.
+type MemcachedSlabsChunkSizeMetricAttributeKey string
+
+const (
+	MemcachedSlabsChunkSizeMetricAttributeKeySlab MemcachedSlabsChunkSizeMetricAttributeKey = "slab"
+)
+
+// MemcachedSlabsChunkSizeMetricConfig provides config for the memcached.slabs.chunk_size metric.
+type MemcachedSlabsChunkSizeMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                      `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []MemcachedSlabsChunkSizeMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *MemcachedSlabsChunkSizeMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *MemcachedSlabsChunkSizeMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case MemcachedSlabsChunkSizeMetricAttributeKeySlab:
+		default:
+			return fmt.Errorf("metric memcached.slabs.chunk_size doesn't have an attribute %v, valid attributes: [slab]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// MemcachedSlabsChunksMetricAttributeKey specifies the key of an attribute for the memcached.slabs.chunks metric.
+type MemcachedSlabsChunksMetricAttributeKey string
+
+const (
+	MemcachedSlabsChunksMetricAttributeKeySlab           MemcachedSlabsChunksMetricAttributeKey = "slab"
+	MemcachedSlabsChunksMetricAttributeKeySlabChunkState MemcachedSlabsChunksMetricAttributeKey = "slab_chunk_state"
+)
+
+// MemcachedSlabsChunksMetricConfig provides config for the memcached.slabs.chunks metric.
+type MemcachedSlabsChunksMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                   `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []MemcachedSlabsChunksMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *MemcachedSlabsChunksMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *MemcachedSlabsChunksMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case MemcachedSlabsChunksMetricAttributeKeySlab, MemcachedSlabsChunksMetricAttributeKeySlabChunkState:
+		default:
+			return fmt.Errorf("metric memcached.slabs.chunks doesn't have an attribute %v, valid attributes: [slab, slab_chunk_state]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// MemcachedSlabsChunksPerPageMetricAttributeKey specifies the key of an attribute for the memcached.slabs.chunks_per_page metric.
+type MemcachedSlabsChunksPerPageMetricAttributeKey string
+
+const (
+	MemcachedSlabsChunksPerPageMetricAttributeKeySlab MemcachedSlabsChunksPerPageMetricAttributeKey = "slab"
+)
+
+// MemcachedSlabsChunksPerPageMetricConfig provides config for the memcached.slabs.chunks_per_page metric.
+type MemcachedSlabsChunksPerPageMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                          `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []MemcachedSlabsChunksPerPageMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *MemcachedSlabsChunksPerPageMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *MemcachedSlabsChunksPerPageMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case MemcachedSlabsChunksPerPageMetricAttributeKeySlab:
+		default:
+			return fmt.Errorf("metric memcached.slabs.chunks_per_page doesn't have an attribute %v, valid attributes: [slab]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// MemcachedSlabsCountMetricConfig provides config for the memcached.slabs.count metric.
+type MemcachedSlabsCountMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+}
+
+func (ms *MemcachedSlabsCountMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+// MemcachedSlabsOperationsMetricAttributeKey specifies the key of an attribute for the memcached.slabs.operations metric.
+type MemcachedSlabsOperationsMetricAttributeKey string
+
+const (
+	MemcachedSlabsOperationsMetricAttributeKeySlab          MemcachedSlabsOperationsMetricAttributeKey = "slab"
+	MemcachedSlabsOperationsMetricAttributeKeySlabOperation MemcachedSlabsOperationsMetricAttributeKey = "slab_operation"
+)
+
+// MemcachedSlabsOperationsMetricConfig provides config for the memcached.slabs.operations metric.
+type MemcachedSlabsOperationsMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                       `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []MemcachedSlabsOperationsMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *MemcachedSlabsOperationsMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *MemcachedSlabsOperationsMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case MemcachedSlabsOperationsMetricAttributeKeySlab, MemcachedSlabsOperationsMetricAttributeKeySlabOperation:
+		default:
+			return fmt.Errorf("metric memcached.slabs.operations doesn't have an attribute %v, valid attributes: [slab, slab_operation]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// MemcachedSlabsPagesMetricAttributeKey specifies the key of an attribute for the memcached.slabs.pages metric.
+type MemcachedSlabsPagesMetricAttributeKey string
+
+const (
+	MemcachedSlabsPagesMetricAttributeKeySlab MemcachedSlabsPagesMetricAttributeKey = "slab"
+)
+
+// MemcachedSlabsPagesMetricConfig provides config for the memcached.slabs.pages metric.
+type MemcachedSlabsPagesMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                  `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []MemcachedSlabsPagesMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *MemcachedSlabsPagesMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *MemcachedSlabsPagesMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case MemcachedSlabsPagesMetricAttributeKeySlab:
+		default:
+			return fmt.Errorf("metric memcached.slabs.pages doesn't have an attribute %v, valid attributes: [slab]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
+// MemcachedSlabsRequestedMemoryMetricAttributeKey specifies the key of an attribute for the memcached.slabs.requested_memory metric.
+type MemcachedSlabsRequestedMemoryMetricAttributeKey string
+
+const (
+	MemcachedSlabsRequestedMemoryMetricAttributeKeySlab MemcachedSlabsRequestedMemoryMetricAttributeKey = "slab"
+)
+
+// MemcachedSlabsRequestedMemoryMetricConfig provides config for the memcached.slabs.requested_memory metric.
+type MemcachedSlabsRequestedMemoryMetricConfig struct {
+	Enabled          bool `mapstructure:"enabled"`
+	enabledSetByUser bool
+
+	AggregationStrategy string                                            `mapstructure:"aggregation_strategy"`
+	EnabledAttributes   []MemcachedSlabsRequestedMemoryMetricAttributeKey `mapstructure:"attributes"`
+}
+
+func (ms *MemcachedSlabsRequestedMemoryMetricConfig) Unmarshal(parser *confmap.Conf) error {
+	if parser == nil {
+		return nil
+	}
+
+	err := parser.Unmarshal(ms)
+	if err != nil {
+		return err
+	}
+
+	ms.enabledSetByUser = parser.IsSet("enabled")
+	return nil
+}
+
+func (ms *MemcachedSlabsRequestedMemoryMetricConfig) Validate() error {
+	for _, val := range ms.EnabledAttributes {
+		switch val {
+		case MemcachedSlabsRequestedMemoryMetricAttributeKeySlab:
+		default:
+			return fmt.Errorf("metric memcached.slabs.requested_memory doesn't have an attribute %v, valid attributes: [slab]", val)
+		}
+	}
+
+	switch ms.AggregationStrategy {
+	case AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax:
+	default:
+		return fmt.Errorf("invalid aggregation strategy %q, valid strategies: [%s, %s, %s, %s]", ms.AggregationStrategy, AggregationStrategySum, AggregationStrategyAvg, AggregationStrategyMin, AggregationStrategyMax)
+	}
+
+	return nil
+}
+
 // MemcachedThreadsMetricConfig provides config for the memcached.threads metric.
 type MemcachedThreadsMetricConfig struct {
 	Enabled          bool `mapstructure:"enabled"`
@@ -371,17 +701,25 @@ func (ms *MemcachedThreadsMetricConfig) Unmarshal(parser *confmap.Conf) error {
 
 // MetricsConfig provides config for memcached metrics.
 type MetricsConfig struct {
-	MemcachedBytes              MemcachedBytesMetricConfig              `mapstructure:"memcached.bytes"`
-	MemcachedCommands           MemcachedCommandsMetricConfig           `mapstructure:"memcached.commands"`
-	MemcachedConnectionsCurrent MemcachedConnectionsCurrentMetricConfig `mapstructure:"memcached.connections.current"`
-	MemcachedConnectionsTotal   MemcachedConnectionsTotalMetricConfig   `mapstructure:"memcached.connections.total"`
-	MemcachedCPUUsage           MemcachedCPUUsageMetricConfig           `mapstructure:"memcached.cpu.usage"`
-	MemcachedCurrentItems       MemcachedCurrentItemsMetricConfig       `mapstructure:"memcached.current_items"`
-	MemcachedEvictions          MemcachedEvictionsMetricConfig          `mapstructure:"memcached.evictions"`
-	MemcachedNetwork            MemcachedNetworkMetricConfig            `mapstructure:"memcached.network"`
-	MemcachedOperationHitRatio  MemcachedOperationHitRatioMetricConfig  `mapstructure:"memcached.operation_hit_ratio"`
-	MemcachedOperations         MemcachedOperationsMetricConfig         `mapstructure:"memcached.operations"`
-	MemcachedThreads            MemcachedThreadsMetricConfig            `mapstructure:"memcached.threads"`
+	MemcachedBytes                MemcachedBytesMetricConfig                `mapstructure:"memcached.bytes"`
+	MemcachedCommands             MemcachedCommandsMetricConfig             `mapstructure:"memcached.commands"`
+	MemcachedConnectionsCurrent   MemcachedConnectionsCurrentMetricConfig   `mapstructure:"memcached.connections.current"`
+	MemcachedConnectionsTotal     MemcachedConnectionsTotalMetricConfig     `mapstructure:"memcached.connections.total"`
+	MemcachedCPUUsage             MemcachedCPUUsageMetricConfig             `mapstructure:"memcached.cpu.usage"`
+	MemcachedCurrentItems         MemcachedCurrentItemsMetricConfig         `mapstructure:"memcached.current_items"`
+	MemcachedEvictions            MemcachedEvictionsMetricConfig            `mapstructure:"memcached.evictions"`
+	MemcachedNetwork              MemcachedNetworkMetricConfig              `mapstructure:"memcached.network"`
+	MemcachedOperationHitRatio    MemcachedOperationHitRatioMetricConfig    `mapstructure:"memcached.operation_hit_ratio"`
+	MemcachedOperations           MemcachedOperationsMetricConfig           `mapstructure:"memcached.operations"`
+	MemcachedSlabsAllocatedMemory MemcachedSlabsAllocatedMemoryMetricConfig `mapstructure:"memcached.slabs.allocated_memory"`
+	MemcachedSlabsChunkSize       MemcachedSlabsChunkSizeMetricConfig       `mapstructure:"memcached.slabs.chunk_size"`
+	MemcachedSlabsChunks          MemcachedSlabsChunksMetricConfig          `mapstructure:"memcached.slabs.chunks"`
+	MemcachedSlabsChunksPerPage   MemcachedSlabsChunksPerPageMetricConfig   `mapstructure:"memcached.slabs.chunks_per_page"`
+	MemcachedSlabsCount           MemcachedSlabsCountMetricConfig           `mapstructure:"memcached.slabs.count"`
+	MemcachedSlabsOperations      MemcachedSlabsOperationsMetricConfig      `mapstructure:"memcached.slabs.operations"`
+	MemcachedSlabsPages           MemcachedSlabsPagesMetricConfig           `mapstructure:"memcached.slabs.pages"`
+	MemcachedSlabsRequestedMemory MemcachedSlabsRequestedMemoryMetricConfig `mapstructure:"memcached.slabs.requested_memory"`
+	MemcachedThreads              MemcachedThreadsMetricConfig              `mapstructure:"memcached.threads"`
 }
 
 func DefaultMetricsConfig() MetricsConfig {
@@ -425,6 +763,42 @@ func DefaultMetricsConfig() MetricsConfig {
 			Enabled:             true,
 			AggregationStrategy: AggregationStrategySum,
 			EnabledAttributes:   []MemcachedOperationsMetricAttributeKey{MemcachedOperationsMetricAttributeKeyType, MemcachedOperationsMetricAttributeKeyOperation},
+		},
+		MemcachedSlabsAllocatedMemory: MemcachedSlabsAllocatedMemoryMetricConfig{
+			Enabled: false,
+		},
+		MemcachedSlabsChunkSize: MemcachedSlabsChunkSizeMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []MemcachedSlabsChunkSizeMetricAttributeKey{MemcachedSlabsChunkSizeMetricAttributeKeySlab},
+		},
+		MemcachedSlabsChunks: MemcachedSlabsChunksMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []MemcachedSlabsChunksMetricAttributeKey{MemcachedSlabsChunksMetricAttributeKeySlab, MemcachedSlabsChunksMetricAttributeKeySlabChunkState},
+		},
+		MemcachedSlabsChunksPerPage: MemcachedSlabsChunksPerPageMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []MemcachedSlabsChunksPerPageMetricAttributeKey{MemcachedSlabsChunksPerPageMetricAttributeKeySlab},
+		},
+		MemcachedSlabsCount: MemcachedSlabsCountMetricConfig{
+			Enabled: false,
+		},
+		MemcachedSlabsOperations: MemcachedSlabsOperationsMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategySum,
+			EnabledAttributes:   []MemcachedSlabsOperationsMetricAttributeKey{MemcachedSlabsOperationsMetricAttributeKeySlab, MemcachedSlabsOperationsMetricAttributeKeySlabOperation},
+		},
+		MemcachedSlabsPages: MemcachedSlabsPagesMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []MemcachedSlabsPagesMetricAttributeKey{MemcachedSlabsPagesMetricAttributeKeySlab},
+		},
+		MemcachedSlabsRequestedMemory: MemcachedSlabsRequestedMemoryMetricConfig{
+			Enabled:             false,
+			AggregationStrategy: AggregationStrategyAvg,
+			EnabledAttributes:   []MemcachedSlabsRequestedMemoryMetricAttributeKey{MemcachedSlabsRequestedMemoryMetricAttributeKeySlab},
 		},
 		MemcachedThreads: MemcachedThreadsMetricConfig{
 			Enabled: true,
