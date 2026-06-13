@@ -255,6 +255,31 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					SparkStageTaskResultSize: SparkStageTaskResultSizeMetricConfig{
 						Enabled: true,
 					},
+					SparkStreamingInputRate: SparkStreamingInputRateMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingInputRateMetricAttributeKey{SparkStreamingInputRateMetricAttributeKeyQueryName},
+					},
+					SparkStreamingLatency: SparkStreamingLatencyMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingLatencyMetricAttributeKey{SparkStreamingLatencyMetricAttributeKeyQueryName},
+					},
+					SparkStreamingProcessingRate: SparkStreamingProcessingRateMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingProcessingRateMetricAttributeKey{SparkStreamingProcessingRateMetricAttributeKeyQueryName},
+					},
+					SparkStreamingStateMemoryUsage: SparkStreamingStateMemoryUsageMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingStateMemoryUsageMetricAttributeKey{SparkStreamingStateMemoryUsageMetricAttributeKeyQueryName},
+					},
+					SparkStreamingStateRows: SparkStreamingStateRowsMetricConfig{
+						Enabled:             true,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingStateRowsMetricAttributeKey{SparkStreamingStateRowsMetricAttributeKeyQueryName},
+					},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					SparkApplicationID:   ResourceAttributeConfig{Enabled: true},
@@ -499,6 +524,31 @@ func TestMetricsBuilderConfig(t *testing.T) {
 					SparkStageTaskResultSize: SparkStageTaskResultSizeMetricConfig{
 						Enabled: false,
 					},
+					SparkStreamingInputRate: SparkStreamingInputRateMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingInputRateMetricAttributeKey{SparkStreamingInputRateMetricAttributeKeyQueryName},
+					},
+					SparkStreamingLatency: SparkStreamingLatencyMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingLatencyMetricAttributeKey{SparkStreamingLatencyMetricAttributeKeyQueryName},
+					},
+					SparkStreamingProcessingRate: SparkStreamingProcessingRateMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingProcessingRateMetricAttributeKey{SparkStreamingProcessingRateMetricAttributeKeyQueryName},
+					},
+					SparkStreamingStateMemoryUsage: SparkStreamingStateMemoryUsageMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingStateMemoryUsageMetricAttributeKey{SparkStreamingStateMemoryUsageMetricAttributeKeyQueryName},
+					},
+					SparkStreamingStateRows: SparkStreamingStateRowsMetricConfig{
+						Enabled:             false,
+						AggregationStrategy: AggregationStrategyAvg,
+						EnabledAttributes:   []SparkStreamingStateRowsMetricAttributeKey{SparkStreamingStateRowsMetricAttributeKeyQueryName},
+					},
 				},
 				ResourceAttributes: ResourceAttributesConfig{
 					SparkApplicationID:   ResourceAttributeConfig{Enabled: false},
@@ -514,7 +564,7 @@ func TestMetricsBuilderConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := loadMetricsBuilderConfig(t, tt.name)
-			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(SparkDriverBlockManagerDiskUsageMetricConfig{}, SparkDriverBlockManagerMemoryUsageMetricConfig{}, SparkDriverCodeGeneratorCompilationAverageTimeMetricConfig{}, SparkDriverCodeGeneratorCompilationCountMetricConfig{}, SparkDriverCodeGeneratorGeneratedClassAverageSizeMetricConfig{}, SparkDriverCodeGeneratorGeneratedClassCountMetricConfig{}, SparkDriverCodeGeneratorGeneratedMethodAverageSizeMetricConfig{}, SparkDriverCodeGeneratorGeneratedMethodCountMetricConfig{}, SparkDriverCodeGeneratorSourceCodeAverageSizeMetricConfig{}, SparkDriverCodeGeneratorSourceCodeOperationsMetricConfig{}, SparkDriverDagSchedulerJobActiveMetricConfig{}, SparkDriverDagSchedulerJobCountMetricConfig{}, SparkDriverDagSchedulerStageCountMetricConfig{}, SparkDriverDagSchedulerStageFailedMetricConfig{}, SparkDriverExecutorGcOperationsMetricConfig{}, SparkDriverExecutorGcTimeMetricConfig{}, SparkDriverExecutorMemoryExecutionMetricConfig{}, SparkDriverExecutorMemoryJvmMetricConfig{}, SparkDriverExecutorMemoryPoolMetricConfig{}, SparkDriverExecutorMemoryStorageMetricConfig{}, SparkDriverHiveExternalCatalogFileCacheHitsMetricConfig{}, SparkDriverHiveExternalCatalogFilesDiscoveredMetricConfig{}, SparkDriverHiveExternalCatalogHiveClientCallsMetricConfig{}, SparkDriverHiveExternalCatalogParallelListingJobsMetricConfig{}, SparkDriverHiveExternalCatalogPartitionsFetchedMetricConfig{}, SparkDriverJvmCPUTimeMetricConfig{}, SparkDriverLiveListenerBusDroppedMetricConfig{}, SparkDriverLiveListenerBusPostedMetricConfig{}, SparkDriverLiveListenerBusProcessingTimeAverageMetricConfig{}, SparkDriverLiveListenerBusQueueSizeMetricConfig{}, SparkExecutorDiskUsageMetricConfig{}, SparkExecutorGcTimeMetricConfig{}, SparkExecutorInputSizeMetricConfig{}, SparkExecutorMemoryUsageMetricConfig{}, SparkExecutorShuffleIoSizeMetricConfig{}, SparkExecutorStorageMemoryUsageMetricConfig{}, SparkExecutorTaskActiveMetricConfig{}, SparkExecutorTaskLimitMetricConfig{}, SparkExecutorTaskResultMetricConfig{}, SparkExecutorTimeMetricConfig{}, SparkJobStageActiveMetricConfig{}, SparkJobStageResultMetricConfig{}, SparkJobTaskActiveMetricConfig{}, SparkJobTaskResultMetricConfig{}, SparkStageDiskSpilledMetricConfig{}, SparkStageExecutorCPUTimeMetricConfig{}, SparkStageExecutorRunTimeMetricConfig{}, SparkStageIoRecordsMetricConfig{}, SparkStageIoSizeMetricConfig{}, SparkStageJvmGcTimeMetricConfig{}, SparkStageMemoryPeakMetricConfig{}, SparkStageMemorySpilledMetricConfig{}, SparkStageShuffleBlocksFetchedMetricConfig{}, SparkStageShuffleFetchWaitTimeMetricConfig{}, SparkStageShuffleIoDiskMetricConfig{}, SparkStageShuffleIoReadSizeMetricConfig{}, SparkStageShuffleIoRecordsMetricConfig{}, SparkStageShuffleIoWriteSizeMetricConfig{}, SparkStageShuffleWriteTimeMetricConfig{}, SparkStageStatusMetricConfig{}, SparkStageTaskActiveMetricConfig{}, SparkStageTaskResultMetricConfig{}, SparkStageTaskResultSizeMetricConfig{}, ResourceAttributeConfig{}))
+			diff := cmp.Diff(tt.want, cfg, cmpopts.IgnoreUnexported(SparkDriverBlockManagerDiskUsageMetricConfig{}, SparkDriverBlockManagerMemoryUsageMetricConfig{}, SparkDriverCodeGeneratorCompilationAverageTimeMetricConfig{}, SparkDriverCodeGeneratorCompilationCountMetricConfig{}, SparkDriverCodeGeneratorGeneratedClassAverageSizeMetricConfig{}, SparkDriverCodeGeneratorGeneratedClassCountMetricConfig{}, SparkDriverCodeGeneratorGeneratedMethodAverageSizeMetricConfig{}, SparkDriverCodeGeneratorGeneratedMethodCountMetricConfig{}, SparkDriverCodeGeneratorSourceCodeAverageSizeMetricConfig{}, SparkDriverCodeGeneratorSourceCodeOperationsMetricConfig{}, SparkDriverDagSchedulerJobActiveMetricConfig{}, SparkDriverDagSchedulerJobCountMetricConfig{}, SparkDriverDagSchedulerStageCountMetricConfig{}, SparkDriverDagSchedulerStageFailedMetricConfig{}, SparkDriverExecutorGcOperationsMetricConfig{}, SparkDriverExecutorGcTimeMetricConfig{}, SparkDriverExecutorMemoryExecutionMetricConfig{}, SparkDriverExecutorMemoryJvmMetricConfig{}, SparkDriverExecutorMemoryPoolMetricConfig{}, SparkDriverExecutorMemoryStorageMetricConfig{}, SparkDriverHiveExternalCatalogFileCacheHitsMetricConfig{}, SparkDriverHiveExternalCatalogFilesDiscoveredMetricConfig{}, SparkDriverHiveExternalCatalogHiveClientCallsMetricConfig{}, SparkDriverHiveExternalCatalogParallelListingJobsMetricConfig{}, SparkDriverHiveExternalCatalogPartitionsFetchedMetricConfig{}, SparkDriverJvmCPUTimeMetricConfig{}, SparkDriverLiveListenerBusDroppedMetricConfig{}, SparkDriverLiveListenerBusPostedMetricConfig{}, SparkDriverLiveListenerBusProcessingTimeAverageMetricConfig{}, SparkDriverLiveListenerBusQueueSizeMetricConfig{}, SparkExecutorDiskUsageMetricConfig{}, SparkExecutorGcTimeMetricConfig{}, SparkExecutorInputSizeMetricConfig{}, SparkExecutorMemoryUsageMetricConfig{}, SparkExecutorShuffleIoSizeMetricConfig{}, SparkExecutorStorageMemoryUsageMetricConfig{}, SparkExecutorTaskActiveMetricConfig{}, SparkExecutorTaskLimitMetricConfig{}, SparkExecutorTaskResultMetricConfig{}, SparkExecutorTimeMetricConfig{}, SparkJobStageActiveMetricConfig{}, SparkJobStageResultMetricConfig{}, SparkJobTaskActiveMetricConfig{}, SparkJobTaskResultMetricConfig{}, SparkStageDiskSpilledMetricConfig{}, SparkStageExecutorCPUTimeMetricConfig{}, SparkStageExecutorRunTimeMetricConfig{}, SparkStageIoRecordsMetricConfig{}, SparkStageIoSizeMetricConfig{}, SparkStageJvmGcTimeMetricConfig{}, SparkStageMemoryPeakMetricConfig{}, SparkStageMemorySpilledMetricConfig{}, SparkStageShuffleBlocksFetchedMetricConfig{}, SparkStageShuffleFetchWaitTimeMetricConfig{}, SparkStageShuffleIoDiskMetricConfig{}, SparkStageShuffleIoReadSizeMetricConfig{}, SparkStageShuffleIoRecordsMetricConfig{}, SparkStageShuffleIoWriteSizeMetricConfig{}, SparkStageShuffleWriteTimeMetricConfig{}, SparkStageStatusMetricConfig{}, SparkStageTaskActiveMetricConfig{}, SparkStageTaskResultMetricConfig{}, SparkStageTaskResultSizeMetricConfig{}, SparkStreamingInputRateMetricConfig{}, SparkStreamingLatencyMetricConfig{}, SparkStreamingProcessingRateMetricConfig{}, SparkStreamingStateMemoryUsageMetricConfig{}, SparkStreamingStateRowsMetricConfig{}, ResourceAttributeConfig{}))
 			require.Emptyf(t, diff, "Config mismatch (-expected +actual):\n%s", diff)
 		})
 	}

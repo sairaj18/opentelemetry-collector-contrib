@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -243,6 +244,34 @@ func (s *sparkScraper) recordCluster(clusterStats *models.ClusterProperties, now
 	}
 	if stat, ok := clusterStats.Gauges[appID+".driver.ExecutorMetrics.MajorGCTime"]; ok {
 		s.mb.RecordSparkDriverExecutorGcTimeDataPoint(now, int64(stat.Value), metadata.AttributeGcTypeMajor)
+	}
+
+	// Structured Streaming metrics are present only when spark.sql.streaming.metricsEnabled=true and a
+	// streaming query is active. Their gauge keys are <appID>.driver.spark.streaming.<queryName>.<suffix>;
+	// the query name may contain dots, so split on the known suffix.
+	streamingPrefix := appID + ".driver.spark.streaming."
+	for key, stat := range clusterStats.Gauges {
+		if !strings.HasPrefix(key, streamingPrefix) {
+			continue
+		}
+		rest := key[len(streamingPrefix):]
+		dot := strings.LastIndex(rest, ".")
+		if dot < 0 {
+			continue
+		}
+		queryName, suffix := rest[:dot], rest[dot+1:]
+		switch suffix {
+		case "inputRate-total":
+			s.mb.RecordSparkStreamingInputRateDataPoint(now, stat.Value, queryName)
+		case "processingRate-total":
+			s.mb.RecordSparkStreamingProcessingRateDataPoint(now, stat.Value, queryName)
+		case "latency":
+			s.mb.RecordSparkStreamingLatencyDataPoint(now, int64(stat.Value), queryName)
+		case "states-rowsTotal":
+			s.mb.RecordSparkStreamingStateRowsDataPoint(now, int64(stat.Value), queryName)
+		case "states-usedBytes":
+			s.mb.RecordSparkStreamingStateMemoryUsageDataPoint(now, int64(stat.Value), queryName)
+		}
 	}
 
 	rb := s.mb.NewResourceBuilder()

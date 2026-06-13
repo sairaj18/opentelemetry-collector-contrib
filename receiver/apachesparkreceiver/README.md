@@ -27,6 +27,10 @@ This receiver supports Apache Spark versions:
 
 - 3.3.2+
 
+The Structured Streaming metrics (`spark.streaming.*`) are only emitted when the monitored Spark
+application is started with `spark.sql.streaming.metricsEnabled=true` and has at least one active
+streaming query. They are reported per query via the `query.name` attribute.
+
 ## Configuration
 
 > **Note:** This receiver was renamed from `apachespark` to `apache_spark` to match the snake_case naming convention.
