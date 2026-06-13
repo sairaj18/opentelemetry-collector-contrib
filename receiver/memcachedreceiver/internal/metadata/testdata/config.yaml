@@ -26,6 +26,28 @@ all_set:
     memcached.operations:
       enabled: true
       attributes: ["type","operation"]
+    memcached.slabs.allocated_memory:
+      enabled: true
+    memcached.slabs.chunk_size:
+      enabled: true
+      attributes: ["slab"]
+    memcached.slabs.chunks:
+      enabled: true
+      attributes: ["slab","slab_chunk_state"]
+    memcached.slabs.chunks_per_page:
+      enabled: true
+      attributes: ["slab"]
+    memcached.slabs.count:
+      enabled: true
+    memcached.slabs.operations:
+      enabled: true
+      attributes: ["slab","slab_operation"]
+    memcached.slabs.pages:
+      enabled: true
+      attributes: ["slab"]
+    memcached.slabs.requested_memory:
+      enabled: true
+      attributes: ["slab"]
     memcached.threads:
       enabled: true
 reaggregate_set:
@@ -53,6 +75,28 @@ reaggregate_set:
       enabled: true
       attributes: []
     memcached.operations:
+      enabled: true
+      attributes: []
+    memcached.slabs.allocated_memory:
+      enabled: true
+    memcached.slabs.chunk_size:
+      enabled: true
+      attributes: []
+    memcached.slabs.chunks:
+      enabled: true
+      attributes: []
+    memcached.slabs.chunks_per_page:
+      enabled: true
+      attributes: []
+    memcached.slabs.count:
+      enabled: true
+    memcached.slabs.operations:
+      enabled: true
+      attributes: []
+    memcached.slabs.pages:
+      enabled: true
+      attributes: []
+    memcached.slabs.requested_memory:
       enabled: true
       attributes: []
     memcached.threads:
@@ -84,5 +128,27 @@ none_set:
     memcached.operations:
       enabled: false
       attributes: ["type","operation"]
+    memcached.slabs.allocated_memory:
+      enabled: false
+    memcached.slabs.chunk_size:
+      enabled: false
+      attributes: ["slab"]
+    memcached.slabs.chunks:
+      enabled: false
+      attributes: ["slab","slab_chunk_state"]
+    memcached.slabs.chunks_per_page:
+      enabled: false
+      attributes: ["slab"]
+    memcached.slabs.count:
+      enabled: false
+    memcached.slabs.operations:
+      enabled: false
+      attributes: ["slab","slab_operation"]
+    memcached.slabs.pages:
+      enabled: false
+      attributes: ["slab"]
+    memcached.slabs.requested_memory:
+      enabled: false
+      attributes: ["slab"]
     memcached.threads:
       enabled: false

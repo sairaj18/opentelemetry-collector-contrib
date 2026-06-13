@@ -96,6 +96,114 @@ resources:
                 - attributes:
                     operation: increment
                     type: miss
+            - name: memcached.slabs.allocated_memory
+              type: gauge
+              unit: By
+            - name: memcached.slabs.chunk_size
+              type: gauge
+              unit: By
+              datapoints:
+                - attributes:
+                    slab: 1
+                - attributes:
+                    slab: 2
+            - name: memcached.slabs.chunks
+              type: gauge
+              unit: '{chunk}'
+              datapoints:
+                - attributes:
+                    slab: 1
+                    slab_chunk_state: free
+                - attributes:
+                    slab: 1
+                    slab_chunk_state: total
+                - attributes:
+                    slab: 1
+                    slab_chunk_state: used
+                - attributes:
+                    slab: 2
+                    slab_chunk_state: free
+                - attributes:
+                    slab: 2
+                    slab_chunk_state: total
+                - attributes:
+                    slab: 2
+                    slab_chunk_state: used
+            - name: memcached.slabs.chunks_per_page
+              type: gauge
+              unit: '{chunk}'
+              datapoints:
+                - attributes:
+                    slab: 1
+                - attributes:
+                    slab: 2
+            - name: memcached.slabs.count
+              type: gauge
+              unit: '{slab}'
+            - name: memcached.slabs.operations
+              type: sum
+              unit: '{operation}'
+              temporality: cumulative
+              monotonic: true
+              datapoints:
+                - attributes:
+                    slab: 1
+                    slab_operation: cas
+                - attributes:
+                    slab: 1
+                    slab_operation: decrement
+                - attributes:
+                    slab: 1
+                    slab_operation: delete
+                - attributes:
+                    slab: 1
+                    slab_operation: get
+                - attributes:
+                    slab: 1
+                    slab_operation: increment
+                - attributes:
+                    slab: 1
+                    slab_operation: set
+                - attributes:
+                    slab: 1
+                    slab_operation: touch
+                - attributes:
+                    slab: 2
+                    slab_operation: cas
+                - attributes:
+                    slab: 2
+                    slab_operation: decrement
+                - attributes:
+                    slab: 2
+                    slab_operation: delete
+                - attributes:
+                    slab: 2
+                    slab_operation: get
+                - attributes:
+                    slab: 2
+                    slab_operation: increment
+                - attributes:
+                    slab: 2
+                    slab_operation: set
+                - attributes:
+                    slab: 2
+                    slab_operation: touch
+            - name: memcached.slabs.pages
+              type: gauge
+              unit: '{page}'
+              datapoints:
+                - attributes:
+                    slab: 1
+                - attributes:
+                    slab: 2
+            - name: memcached.slabs.requested_memory
+              type: gauge
+              unit: By
+              datapoints:
+                - attributes:
+                    slab: 1
+                - attributes:
+                    slab: 2
             - name: memcached.threads
               type: sum
               unit: '{threads}'
